@@ -1,0 +1,120 @@
+/* flagship-ui-design · starter tokens
+   Copy into the project's token layer and rename to the project's conventions.
+   Values are starting points (see references/motion-numbers.md), not standards. */
+
+@layer reset, tokens, base, components, utilities, overrides;
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* ---- motion: durations by intent ---- */
+    --duration-instant: 50ms;   /* color, hover */
+    --duration-fast: 150ms;     /* tooltip, toggle, compact exit */
+    --duration-base: 250ms;     /* menu, popover, list move */
+    --duration-slow: 400ms;     /* modal, drawer, route */
+    --duration-slower: 600ms;   /* scroll reveal, counters */
+
+    /* ---- motion: eases by intent ---- */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);        /* enter (quint-out) */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);    /* hero, masked reveals */
+    --ease-in: cubic-bezier(0.55, 0, 1, 0.45);         /* quick exits only (≤150ms) */
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);     /* on-screen moves */
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* sheet settle */
+    /* spring baked to linear(): generate from a spring (bounce ≈ 0.15) with linear-easing-generator / easing.dev */
+    --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1.004 83.8%, 1);
+
+    /* ---- space (4/8 scale; fluid section padding) ---- */
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px; --space-24: 96px;
+    --section-padding: clamp(var(--space-12), 8vw, var(--space-24));
+
+    /* ---- radius (nested rule: inner = outer − padding) ---- */
+    --radius-1: 4px; --radius-2: 8px; --radius-3: 12px; --radius-4: 16px; --radius-5: 24px; --radius-full: 999px;
+
+    /* ---- color roles (OKLCH; replace hues with the product's) ---- */
+    --hue-accent: 250;
+    --bg: light-dark(oklch(99% 0.004 var(--hue-accent)), oklch(15% 0.012 var(--hue-accent)));
+    --bg-elevated: light-dark(oklch(100% 0 0), oklch(19% 0.014 var(--hue-accent)));
+    --fg: light-dark(oklch(18% 0.02 var(--hue-accent)), oklch(96% 0.006 var(--hue-accent)));
+    --fg-muted: light-dark(oklch(48% 0.02 var(--hue-accent)), oklch(72% 0.012 var(--hue-accent)));
+    --border: color-mix(in oklab, currentColor 12%, transparent);
+    --accent: light-dark(oklch(55% 0.2 var(--hue-accent)), oklch(78% 0.16 var(--hue-accent)));
+    --accent-fg: light-dark(oklch(99% 0 0), oklch(15% 0.02 var(--hue-accent)));
+    --accent-hover: color-mix(in oklab, var(--accent) 90%, black);
+    --success: oklch(65% 0.17 150); --warning: oklch(78% 0.16 80); --danger: oklch(60% 0.2 25);
+
+    /* ---- elevation: layered, tinted shadows (light); surface lift in dark ---- */
+    --shadow-color: light-dark(oklch(30% 0.03 var(--hue-accent) / 1), oklch(0% 0 0 / 1));
+    --shadow-1: 0 1px 2px color-mix(in oklab, var(--shadow-color) 8%, transparent);
+    --shadow-2: 0 1px 2px color-mix(in oklab, var(--shadow-color) 6%, transparent),
+                0 4px 8px color-mix(in oklab, var(--shadow-color) 6%, transparent);
+    --shadow-3: 0 1px 2px color-mix(in oklab, var(--shadow-color) 6%, transparent),
+                0 8px 16px color-mix(in oklab, var(--shadow-color) 8%, transparent),
+                0 24px 48px color-mix(in oklab, var(--shadow-color) 10%, transparent);
+
+    /* ---- z-index scale ---- */
+    --z-sticky: 100; --z-dropdown: 200; --z-overlay: 300; --z-modal: 400; --z-toast: 500;
+
+    /* ---- type ---- */
+    --font-display: "Your Display Face", var(--font-text);
+    --font-text: "Your Text Face", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, "JetBrains Mono", monospace;
+    --text-measure: 65ch;
+    --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.94rem);
+    --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --step-1: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+    --step-2: clamp(1.56rem, 1.3rem + 1.2vw, 2.25rem);
+    --step-3: clamp(1.95rem, 1.5rem + 2.2vw, 3.25rem);
+    --step-4: clamp(2.44rem, 1.6rem + 4vw, 5rem);
+  }
+}
+
+@layer base {
+  html { scrollbar-gutter: stable; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-text); font-size: var(--step-0); line-height: 1.5;
+    font-synthesis: none; font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 { font-family: var(--font-display); line-height: 1.08; letter-spacing: -0.02em; text-wrap: balance; }
+  p, li { text-wrap: pretty; max-width: var(--text-measure); }
+  :is(table, [data-numeric], time, .tabular) { font-variant-numeric: tabular-nums slashed-zero; }
+  img, video, canvas { max-inline-size: 100%; block-size: auto; }
+  button, [role="button"], a { touch-action: manipulation; }
+
+  /* focus: visible, 3:1, never removed */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-1); }
+  :focus:not(:focus-visible) { outline: none; }
+
+  /* default interaction feedback (explicit properties, never `all`) */
+  .interactive {
+    transition: transform var(--duration-fast) var(--ease-out),
+                opacity var(--duration-fast) var(--ease-out),
+                background-color var(--duration-instant) linear,
+                color var(--duration-instant) linear;
+  }
+  .interactive:active { transform: scale(0.97); }
+
+  /* reduced motion is a composition: remove travel, keep feedback */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  }
+
+  /* glass needs a solid fallback */
+  @media (prefers-reduced-transparency: reduce) {
+    .glass { backdrop-filter: none; background: var(--bg-elevated); }
+  }
+
+  /* forced colors: keep boundaries visible */
+  @media (forced-colors: active) {
+    .card, .glass, button { border: 1px solid; }
+  }
+}
