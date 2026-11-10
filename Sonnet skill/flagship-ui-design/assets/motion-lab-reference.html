@@ -1,0 +1,3763 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER // 120Hz UI/UX & Motion Engineering Lab</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#07090E',
+            surface: '#0D111A',
+            surfaceElevated: '#131926',
+            cyanAccent: '#22D3EE',
+            indigoAccent: '#6366F1',
+            magentaAccent: '#F43F5E',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ==========================================================================
+       1. CUSTOM HOUDINI PROPERTIES & CORE DESIGN TOKENS
+       ========================================================================== */
+    @property --beam-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    :root {
+      --bg-base: #07090E;
+      --bg-surface: #0D111A;
+      --accent-cyan: #22D3EE;
+      --accent-indigo: #6366F1;
+      --accent-magenta: #F43F5E;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: #F8FAFC;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      selection-background-color: rgba(34, 211, 238, 0.25);
+    }
+
+    ::selection {
+      background: rgba(34, 211, 238, 0.25);
+      color: #22D3EE;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ==========================================================================
+       2. MULTI-LAYERED AMBIENT ELEVATION & SPECULAR HAIRLINE BORDERS
+       ========================================================================== */
+    .ambient-shadow {
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.45),
+        0 4px 8px rgba(0, 0, 0, 0.35),
+        0 12px 24px rgba(0, 0, 0, 0.35),
+        0 24px 48px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* Directional 1px specular border using mask-composite */
+    .specular-border {
+      position: relative;
+    }
+    .specular-border::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.24) 0%,
+        rgba(255, 255, 255, 0.06) 45%,
+        rgba(34, 211, 238, 0.14) 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ==========================================================================
+       3. CURSOR-TRACKED RADIAL BORDER SPOTLIGHT BENTO CARDS
+       ========================================================================== */
+    .bento-card {
+      position: relative;
+      background: rgba(13, 17, 26, 0.78);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      --mouse-x: -500px;
+      --mouse-y: -500px;
+    }
+
+    /* Subtle surface spotlight glow */
+    .bento-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(
+        550px circle at var(--mouse-x) var(--mouse-y),
+        rgba(34, 211, 238, 0.07),
+        transparent 55%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Sharp 1px border illumination tracking cursor */
+    .bento-card-border {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: radial-gradient(
+        360px circle at var(--mouse-x) var(--mouse-y),
+        rgba(34, 211, 238, 0.75),
+        rgba(99, 102, 241, 0.35) 35%,
+        rgba(255, 255, 255, 0.07) 70%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* ==========================================================================
+       4. ROTATING CONIC BORDER BEAM (CTA BUTTON)
+       ========================================================================== */
+    @keyframes spinBeam {
+      to {
+        --beam-angle: 360deg;
+      }
+    }
+
+    .conic-beam-btn {
+      position: relative;
+      isolation: isolate;
+    }
+    .conic-beam-btn::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: conic-gradient(
+        from var(--beam-angle),
+        transparent 60%,
+        #6366F1 82%,
+        #22D3EE 96%,
+        #ffffff 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: spinBeam 3.2s linear infinite;
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       5. MASKED STAGGERED LINE REVEAL
+       ========================================================================== */
+    .line-mask {
+      overflow: hidden;
+      display: block;
+      padding-bottom: 0.08em;
+    }
+    .line-inner {
+      display: block;
+      transform: translateY(110%);
+      opacity: 0;
+      transition:
+        transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, opacity;
+    }
+    .line-inner.revealed {
+      transform: translateY(0%);
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       6. AURORA MESH ANIMATION FOR GLASS TUNER
+       ========================================================================== */
+    @keyframes auroraFloat1 {
+      0%, 100% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(45px, -25px) scale(1.15); }
+      66% { transform: translate(-30px, 25px) scale(0.92); }
+    }
+    @keyframes auroraFloat2 {
+      0%, 100% { transform: translate(0px, 0px) scale(1); }
+      50% { transform: translate(-55px, 35px) scale(1.22); }
+    }
+    .aurora-orb-1 {
+      animation: auroraFloat1 9s ease-in-out infinite;
+    }
+    .aurora-orb-2 {
+      animation: auroraFloat2 11s ease-in-out infinite;
+    }
+
+    /* ==========================================================================
+       7. 3D ISOMETRIC EXPLODED STACK TRANSFORMS
+       ========================================================================== */
+    .iso-scene {
+      perspective: 1200px;
+      transform-style: preserve-3d;
+    }
+    .iso-stack {
+      transform-style: preserve-3d;
+      transform: rotateX(56deg) rotateZ(-34deg);
+      transition: transform 0.2s ease-out;
+    }
+    .iso-layer {
+      transform-style: preserve-3d;
+      will-change: transform;
+      box-shadow:
+        -12px 12px 24px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    /* ==========================================================================
+       8. CUSTOM RANGE SLIDERS
+       ========================================================================== */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.09);
+      height: 5px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #22D3EE;
+      border: 2px solid #07090E;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* ==========================================================================
+       9. SONNER-STYLE STACKED TOASTS
+       ========================================================================== */
+    #toast-viewport {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 90;
+      width: 340px;
+      pointer-events: none;
+    }
+    .sonner-toast {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      pointer-events: auto;
+      transform-origin: bottom center;
+      transition:
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.35s ease;
+      will-change: transform, opacity;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #07090E;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E293B;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+
+<body class="relative min-h-screen selection:bg-cyan-500/20 selection:text-cyan-300">
+
+  <!-- ==========================================================================
+       INLINE SVG FRACTAL NOISE OVERLAY (3% OPACITY) & GOOEY FILTER DEFS
+       ========================================================================== -->
+  <svg class="pointer-events-none fixed inset-0 z-50 h-full w-full opacity-[0.032]" aria-hidden="true">
+    <filter id="global-fractal-noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="4" stitchTiles="stitch" />
+      <feColorMatrix type="saturate" values="0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#global-fractal-noise)" />
+  </svg>
+
+  <!-- Hidden SVG Filter Definition for Card D Gooey Liquid Mercury Effect -->
+  <svg class="hidden" aria-hidden="true">
+    <defs>
+      <filter id="liquid-goo-filter">
+        <feGaussianBlur id="goo-blur-node" in="SourceGraphic" stdDeviation="13" result="blur" />
+        <feColorMatrix
+          in="blur"
+          mode="matrix"
+          values="1 0 0 0 0  
+                  0 1 0 0 0  
+                  0 0 1 0 0  
+                  0 0 0 24 -10"
+          result="goo"
+        />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+
+      <!-- SVG Displacement Map Filter for Chromatic Liquid Glass Lens -->
+      <filter id="chromatic-liquid-lens" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence
+          id="lens-turbulence-node"
+          type="fractalNoise"
+          baseFrequency="0.025"
+          numOctaves="2"
+          seed="7"
+          result="noise"
+        />
+        <feDisplacementMap
+          id="lens-displacement-node"
+          in="SourceGraphic"
+          in2="noise"
+          scale="28"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Ambient Top Background Glow -->
+  <div class="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[950px] h-[420px] bg-gradient-to-b from-cyan-500/10 via-indigo-500/5 to-transparent blur-[110px] -z-10"></div>
+
+  <!-- ==========================================================================
+       REAL-TIME 120Hz TELEMETRY HUD PILL (BOTTOM LEFT)
+       ========================================================================== -->
+  <aside
+    id="telemetry-hud"
+    class="fixed bottom-4 left-4 z-40 flex items-center gap-3 rounded-full bg-[#0D111A]/90 px-3.5 py-2 backdrop-blur-xl specular-border ambient-shadow text-[11px] font-mono tabular-nums text-slate-300 select-none transition-all duration-300"
+  >
+    <span class="relative flex h-2 w-2">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
+    </span>
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-500">FPS</span>
+      <span id="hud-fps" class="font-semibold text-cyan-400">120</span>
+    </div>
+    <span class="text-slate-700">|</span>
+    <div class="flex items-center gap-1">
+      <span class="text-slate-500">Δt</span>
+      <span id="hud-delta" class="text-indigo-400">8.3ms</span>
+    </div>
+    <span class="hidden sm:inline text-slate-700">|</span>
+    <div class="hidden sm:flex items-center gap-1">
+      <span class="text-slate-500">VEL</span>
+      <span id="hud-vel" class="text-rose-400">0px/s</span>
+    </div>
+    <span class="hidden md:inline text-slate-700">|</span>
+    <div class="hidden md:flex items-center gap-1">
+      <span class="text-slate-500">XY</span>
+      <span id="hud-xy" class="text-slate-300">0, 0</span>
+    </div>
+    <button
+      onclick="openCodeInspector('telemetry')"
+      title="Inspect Telemetry Loop Code"
+      class="ml-1 rounded-full bg-white/5 hover:bg-cyan-500/20 px-2 py-0.5 text-[10px] text-cyan-300 transition-colors"
+    >
+      &lt;/&gt;
+    </button>
+  </aside>
+
+  <!-- ==========================================================================
+       1. MORPHING DYNAMIC ISLAND NAVBAR
+       ========================================================================== -->
+  <header class="fixed top-0 left-0 right-0 z-40 flex justify-center pointer-events-none transition-all duration-500" id="navbar-wrapper">
+    <nav
+      id="dynamic-navbar"
+      class="pointer-events-auto w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] border-b border-white/[0.07] bg-[#07090E]/75 backdrop-blur-xl"
+    >
+      <!-- Brand Logo -->
+      <a href="#hero-section" class="flex items-center gap-2.5 group">
+        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-400/20 via-indigo-500/20 to-rose-500/20 flex items-center justify-center specular-border group-hover:scale-105 transition-transform">
+          <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-bold tracking-wider text-white flex items-center gap-1.5">
+            AETHER
+            <span class="rounded bg-cyan-500/15 px-1.5 py-0.2 text-[9px] font-mono text-cyan-300 border border-cyan-400/20">120Hz</span>
+          </span>
+          <span id="nav-subtitle" class="text-[10px] font-mono text-slate-400 transition-all duration-300">MOTION ENGINEERING LAB</span>
+        </div>
+      </a>
+
+      <!-- Shared-Layout Sliding Pill Navigation Tabs -->
+      <div
+        id="nav-pill-container"
+        class="hidden md:flex relative items-center bg-white/[0.03] p-1 rounded-full border border-white/[0.07]"
+      >
+        <!-- Shared-Layout Sliding Background Pill -->
+        <div
+          id="nav-sliding-pill"
+          class="absolute top-1 bottom-1 left-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
+          style="width: 78px; transform: translateX(0px);"
+        ></div>
+
+        <a href="#hero-section" data-nav-item class="relative z-10 px-3.5 py-1.5 text-xs font-medium text-white transition-colors">
+          Hero Lab
+        </a>
+        <a href="#bento-section" data-nav-item class="relative z-10 px-3.5 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors">
+          Bento &amp; Shaders
+        </a>
+        <a href="#scroll-section" data-nav-item class="relative z-10 px-3.5 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors">
+          3D Scroll &amp; Type
+        </a>
+        <a href="#micro-section" data-nav-item class="relative z-10 px-3.5 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors">
+          Optimistic UI
+        </a>
+        <a href="#advanced-section" data-nav-item class="relative z-10 px-3.5 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors">
+          FLIP &amp; Refraction
+        </a>
+      </div>
+
+      <!-- Right Actions: Force Island Toggle, Cmd+K Trigger, Code Inspector -->
+      <div class="flex items-center gap-2">
+        <button
+          id="toggle-island-btn"
+          onclick="toggleManualIsland()"
+          class="hidden lg:flex items-center gap-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 px-3 py-1.5 text-[11px] font-mono text-slate-300 transition-colors"
+          title="Test Dynamic Island Morph State"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-indigo-400" id="island-status-dot"></span>
+          <span id="island-status-text">Morph: Auto</span>
+        </button>
+
+        <button
+          onclick="openCommandPalette()"
+          class="flex items-center gap-2.5 rounded-full bg-[#131926]/90 hover:bg-[#192132] px-3.5 py-1.5 text-xs text-slate-300 specular-border transition-all group"
+        >
+          <svg class="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span class="hidden sm:inline text-slate-400 group-hover:text-slate-200">Search Lab...</span>
+          <kbd class="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-cyan-300">⌘K</kbd>
+        </button>
+
+        <button
+          onclick="openCodeInspector('navbar')"
+          class="rounded-full bg-white/[0.04] hover:bg-cyan-500/20 border border-white/10 p-1.5 text-xs font-mono text-cyan-300 transition-colors"
+          title="Inspect Dynamic Island & Sliding Pill Code"
+        >
+          &lt;/&gt;
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ==========================================================================
+       2. INTERACTIVE HERO SECTION
+       ========================================================================== -->
+  <main class="pt-28 pb-24">
+    <section id="hero-section" class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        
+        <!-- Left Column: Kinetic Headline, Variable Font Scrubber, Magnetic CTAs -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Cipher / Scramble Decode Eyebrow Badge -->
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              id="cipher-badge"
+              onmouseenter="triggerCipherDecode(this, 'SYS.120HZ // COMPOSITOR PIPELINE ACTIVE')"
+              onclick="triggerCipherDecode(this, 'SYS.120HZ // COMPOSITOR PIPELINE ACTIVE')"
+              class="group inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-400/30 px-3.5 py-1.5 text-[11px] font-mono text-cyan-300 hover:bg-cyan-500/15 transition-colors cursor-pointer"
+            >
+              <span class="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span id="cipher-badge-text" class="tracking-wider">SYS.120HZ // COMPOSITOR PIPELINE ACTIVE</span>
+              <span class="text-[10px] text-cyan-400/60 group-hover:text-cyan-300 ml-1">[Hover Decode]</span>
+            </button>
+
+            <button
+              onclick="replayHeroReveal()"
+              class="inline-flex items-center gap-1 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 px-3 py-1 text-[11px] font-mono text-slate-300 transition-colors"
+            >
+              <svg class="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Replay Line Reveal
+            </button>
+
+            <button
+              onclick="openCodeInspector('hero-type')"
+              class="inline-flex items-center gap-1 rounded-full bg-white/[0.04] hover:bg-cyan-500/20 border border-white/10 px-3 py-1 text-[11px] font-mono text-cyan-300 transition-colors"
+            >
+              &lt;/&gt; Inspect Hero Code
+            </button>
+          </div>
+
+          <!-- Masked Staggered Line Reveal Headline -->
+          <h1
+            id="hero-headline"
+            class="text-4xl sm:text-6xl font-bold tracking-tight text-white select-none"
+            style="font-weight: 760; letter-spacing: -0.035em; line-height: 1.07;"
+          >
+            <span class="line-mask">
+              <span class="line-inner" style="transition-delay: 40ms;">Precision Motion</span>
+            </span>
+            <span class="line-mask">
+              <span class="line-inner bg-gradient-to-r from-cyan-300 via-indigo-400 to-rose-400 bg-clip-text text-transparent" style="transition-delay: 140ms;">
+                &amp; Tactile Surface
+              </span>
+            </span>
+            <span class="line-mask">
+              <span
+                id="hero-scramble-word"
+                onmouseenter="triggerCipherDecode(this, 'Engineering Lab.')"
+                onclick="triggerCipherDecode(this, 'Engineering Lab.')"
+                class="line-inner cursor-pointer hover:text-cyan-300 transition-colors"
+                style="transition-delay: 240ms;"
+                title="Hover or click to run Cipher Decode"
+              >Engineering Lab.</span>
+            </span>
+          </h1>
+
+          <p class="text-slate-400 text-base sm:text-lg max-w-2xl leading-relaxed">
+            An interactive reference workbench for <span class="text-slate-200 font-medium">120fps spring physics</span>, <span class="text-slate-200 font-medium">specular 1px hairline glass</span>, <span class="text-slate-200 font-medium">scroll-scrubbed 3D layers</span>, and <span class="text-slate-200 font-medium">GPU compositor micro-interactions</span>. Tweak live parameters below or inspect the exact production code.
+          </p>
+
+          <!-- Interactive Variable Typography & Tracking Scrubber -->
+          <div class="rounded-2xl bg-[#0D111A]/90 p-4 specular-border ambient-shadow space-y-3">
+            <div class="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-indigo-400"></span>
+                <span class="text-xs font-mono uppercase tracking-wider text-slate-300">Live Variable Font Axis &amp; Optical Tracking Tuner</span>
+              </div>
+              <button
+                onclick="resetTypographyScrubber()"
+                class="text-[11px] font-mono text-cyan-400 hover:underline"
+              >
+                Reset Axes
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <!-- Weight Axis -->
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-slate-400">wght (Weight)</span>
+                  <span id="type-weight-val" class="text-cyan-300 tabular-nums">760</span>
+                </div>
+                <input
+                  id="type-weight-slider"
+                  type="range"
+                  min="200"
+                  max="900"
+                  value="760"
+                  class="w-full"
+                  oninput="updateHeroTypography()"
+                />
+              </div>
+
+              <!-- Tracking / Letter Spacing -->
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-slate-400">Tracking (em)</span>
+                  <span id="type-tracking-val" class="text-indigo-300 tabular-nums">-0.035em</span>
+                </div>
+                <input
+                  id="type-tracking-slider"
+                  type="range"
+                  min="-60"
+                  max="80"
+                  value="-35"
+                  class="w-full"
+                  oninput="updateHeroTypography()"
+                />
+              </div>
+
+              <!-- Line Height -->
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-slate-400">Line Height</span>
+                  <span id="type-leading-val" class="text-rose-300 tabular-nums">1.07</span>
+                </div>
+                <input
+                  id="type-leading-slider"
+                  type="range"
+                  min="90"
+                  max="145"
+                  value="107"
+                  class="w-full"
+                  oninput="updateHeroTypography()"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Magnetic CTA Buttons with Rotating Conic Border Beam -->
+          <div class="flex flex-wrap items-center gap-4 pt-2">
+            <div class="magnetic-wrap inline-block" data-magnetic-strength="0.38">
+              <a
+                href="#bento-section"
+                class="conic-beam-btn inline-flex items-center gap-2.5 rounded-full bg-[#131926] hover:bg-[#192234] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/10 transition-colors"
+              >
+                <span>Explore Surface &amp; Physics Lab</span>
+                <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </a>
+            </div>
+
+            <div class="magnetic-wrap inline-block" data-magnetic-strength="0.32">
+              <button
+                onclick="openCommandPalette()"
+                class="inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] px-5 py-3.5 text-sm font-medium text-slate-200 specular-border transition-colors"
+              >
+                <span>Launch Command Palette</span>
+                <kbd class="rounded bg-white/10 px-2 py-0.5 text-xs font-mono text-cyan-300">⌘K</kbd>
+              </button>
+            </div>
+
+            <span class="text-[11px] font-mono text-slate-500">
+              ← Move cursor within 35px to feel magnetic spring pull
+            </span>
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive Hero Canvas Sandbox (Vector/ASCII Field) -->
+        <div class="lg:col-span-5">
+          <div class="rounded-3xl bg-[#0D111A] p-3 specular-border ambient-shadow">
+            <!-- Top Bar inside Sandbox -->
+            <div class="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+              <div class="flex items-center gap-2">
+                <span class="h-2.5 w-2.5 rounded-full bg-rose-500/80"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-amber-400/80"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-400/80"></span>
+                <span class="ml-1 text-[11px] font-mono text-slate-400">LERP_VECTOR_FIELD.glsl</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button
+                  id="canvas-mode-btn"
+                  onclick="toggleHeroCanvasMode()"
+                  class="rounded-lg bg-cyan-500/15 border border-cyan-400/30 px-2.5 py-1 text-[10px] font-mono text-cyan-300 hover:bg-cyan-500/25 transition-colors"
+                >
+                  Mode: ASCII + Vectors
+                </button>
+                <button
+                  onclick="openCodeInspector('hero-canvas')"
+                  class="rounded-lg bg-white/5 hover:bg-cyan-500/20 px-2 py-1 text-[10px] font-mono text-cyan-300 transition-colors"
+                >
+                  &lt;/&gt;
+                </button>
+              </div>
+            </div>
+
+            <!-- Interactive HTML5 Canvas -->
+            <div class="relative h-[370px] w-full overflow-hidden rounded-2xl bg-[#07090E] mt-2">
+              <canvas id="hero-vector-canvas" class="h-full w-full cursor-crosshair block"></canvas>
+              
+              <!-- Overlay Telemetry Badge inside Canvas -->
+              <div class="pointer-events-none absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-xl bg-[#0D111A]/85 px-3 py-2 backdrop-blur-md border border-white/10 text-[11px] font-mono">
+                <span class="text-slate-400">Move pointer or click to emit shockwave</span>
+                <span id="canvas-node-count" class="text-cyan-400 tabular-nums">Nodes: 240</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         3. BENTO GRID: SURFACE, SHADER & CURSOR PHYSICS LAB
+         ========================================================================== -->
+    <section id="bento-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2">
+            <span>01 // SURFACE, SHADER &amp; CURSOR PHYSICS</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            Bento Material &amp; Physics Workbench
+          </h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-mono text-slate-400">
+            Cursor-Tracked Radial Spotlight Active (<code class="text-cyan-300">--mouse-x/y</code>)
+          </span>
+          <button
+            onclick="openCodeInspector('spotlight')"
+            class="rounded-full bg-white/[0.05] hover:bg-cyan-500/20 border border-white/10 px-3.5 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+          >
+            &lt;/&gt; Spotlight CSS
+          </button>
+        </div>
+      </div>
+
+      <!-- Bento Grid Container -->
+      <div id="bento-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- ====================================================================
+             CARD A: SPECULAR GLASSMORPHISM & ACRYLIC TUNER (7 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-7 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-5">
+            <!-- Header -->
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-cyan-400">Card A // Material Optics</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">Specular Glassmorphism &amp; Acrylic Tuner</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  True premium glass stacks <code class="text-slate-200">backdrop-filter: blur() saturate()</code> with a directional 1px top-edge highlight and fractal noise grain.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('glass')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Live Animated Aurora / Mesh Stage + Floating Acrylic Card -->
+            <div class="relative h-64 w-full rounded-2xl overflow-hidden bg-[#06080D] border border-white/10 flex items-center justify-center p-6">
+              <!-- Animated Moving Background Orbs & Grid -->
+              <div class="absolute inset-0 opacity-30 bg-[radial-gradient(#22D3EE_1px,transparent_1px)] [background-size:16px_16px]"></div>
+              <div class="aurora-orb-1 absolute -top-10 left-10 h-44 w-44 rounded-full bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-600 opacity-75 blur-2xl"></div>
+              <div class="aurora-orb-2 absolute -bottom-12 right-12 h-48 w-48 rounded-full bg-gradient-to-tr from-rose-500 via-fuchsia-500 to-indigo-500 opacity-70 blur-2xl"></div>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[64px] font-black tracking-tighter text-white/15 select-none pointer-events-none">
+                REFRACTION
+              </div>
+
+              <!-- Live Tunable Glassmorphic Specimen -->
+              <div
+                id="glass-specimen"
+                class="relative z-10 w-full max-w-md rounded-2xl p-5 transition-all duration-75"
+                style="
+                  background: rgba(13, 17, 26, 0.42);
+                  backdrop-filter: blur(20px) saturate(190%);
+                  -webkit-backdrop-filter: blur(20px) saturate(190%);
+                  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.45), 0 20px 40px rgba(0,0,0,0.45);
+                  border: 1px solid rgba(255, 255, 255, 0.16);
+                "
+              >
+                <!-- Adjustable SVG Noise Layer inside Glass -->
+                <div
+                  id="glass-noise-layer"
+                  class="pointer-events-none absolute inset-0 rounded-2xl opacity-[0.04]"
+                  style="background-image: radial-gradient(rgba(255,255,255,0.35) 1px, transparent 0); background-size: 3px 3px;"
+                ></div>
+
+                <div class="relative z-10 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-cyan-300 font-mono text-sm font-bold">
+                      Δn
+                    </div>
+                    <div>
+                      <div class="text-sm font-semibold text-white">Optical Acrylic Surface</div>
+                      <div id="glass-live-readout" class="text-[11px] font-mono text-cyan-200/90 tabular-nums">
+                        blur(20px) saturate(190%)
+                      </div>
+                    </div>
+                  </div>
+                  <span class="rounded-full bg-emerald-400/20 border border-emerald-300/30 px-2.5 py-0.5 text-[10px] font-mono text-emerald-200">
+                    GPU Composited
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4 Live Sliders -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Blur</span>
+                  <span id="glass-blur-val" class="text-cyan-300 tabular-nums">20px</span>
+                </div>
+                <input id="glass-blur" type="range" min="0" max="40" value="20" class="w-full" oninput="updateGlassSpecimen()" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Saturate</span>
+                  <span id="glass-sat-val" class="text-indigo-300 tabular-nums">190%</span>
+                </div>
+                <input id="glass-sat" type="range" min="100" max="300" value="190" class="w-full" oninput="updateGlassSpecimen()" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Specular Edge</span>
+                  <span id="glass-spec-val" class="text-rose-300 tabular-nums">45%</span>
+                </div>
+                <input id="glass-spec" type="range" min="0" max="90" value="45" class="w-full" oninput="updateGlassSpecimen()" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Frost Grain</span>
+                  <span id="glass-grain-val" class="text-emerald-300 tabular-nums">4%</span>
+                </div>
+                <input id="glass-grain" type="range" min="0" max="18" value="4" class="w-full" oninput="updateGlassSpecimen()" />
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====================================================================
+             CARD B: 3D PERSPECTIVE TILT & SPECULAR GLARE CARD (5 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-5 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 flex items-start justify-between gap-4 mb-4">
+            <div>
+              <span class="text-[11px] font-mono uppercase tracking-wider text-indigo-400">Card B // Spatial Matrix</span>
+              <h3 class="text-xl font-semibold text-white mt-0.5">3D Perspective Tilt &amp; Glare</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Maps pointer offset to <code class="text-slate-200">rotateX/Y</code> with parallax Z-axis layers.
+              </p>
+            </div>
+            <button
+              onclick="openCodeInspector('tilt')"
+              class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+            >
+              &lt;/&gt; Inspect Code
+            </button>
+          </div>
+
+          <!-- Interactive 3D Tilt Stage -->
+          <div
+            id="tilt-stage"
+            class="relative z-10 flex-1 flex items-center justify-center py-4 select-none"
+            style="perspective: 1000px;"
+          >
+            <div
+              id="tilt-card"
+              class="relative w-full max-w-[330px] h-[240px] rounded-2xl bg-gradient-to-br from-[#161F33] via-[#0F1523] to-[#090D16] p-5 border border-white/15 shadow-2xl transition-transform duration-150 ease-out cursor-pointer"
+              style="transform-style: preserve-3d; transform: rotateX(0deg) rotateY(0deg);"
+            >
+              <!-- Dynamic Radial Glare Layer -->
+              <div
+                id="tilt-glare"
+                class="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.28), transparent 65%);"
+              ></div>
+
+              <!-- Z-Layer 1: Top Telemetry Header (translateZ 28px) -->
+              <div
+                class="flex items-center justify-between"
+                style="transform: translateZ(28px);"
+              >
+                <span class="rounded-md bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 text-[10px] font-mono text-cyan-300">
+                  Z-DEPTH: +28px
+                </span>
+                <span id="tilt-readout" class="text-[11px] font-mono text-slate-400 tabular-nums">
+                  X: 0.0° | Y: 0.0°
+                </span>
+              </div>
+
+              <!-- Z-Layer 2: Center Floating Chip Module (translateZ 52px) -->
+              <div
+                class="my-6 rounded-xl bg-[#07090E]/90 border border-indigo-400/30 p-3.5 shadow-xl flex items-center justify-between"
+                style="transform: translateZ(52px);"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="h-9 w-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-obsidian font-bold text-xs">
+                    M4
+                  </div>
+                  <div>
+                    <div class="text-xs font-semibold text-white">Neural Shader Core</div>
+                    <div class="text-[10px] font-mono text-cyan-300">translateZ(52px) Parallax</div>
+                  </div>
+                </div>
+                <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              </div>
+
+              <!-- Z-Layer 3: Bottom Footer (translateZ 20px) -->
+              <div
+                class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1"
+                style="transform: translateZ(20px);"
+              >
+                <span>Move pointer across card</span>
+                <span class="text-indigo-300">1000px Perspective</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====================================================================
+             CARD C: REAL-TIME SPRING PHYSICS INTERRUPTIBILITY ENGINE (6 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-6 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-rose-400">Card C // Hooke's Law Solver</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">Spring Physics vs. Fixed CSS Easing</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Click target nodes rapidly mid-flight. Fixed CSS snaps awkwardly on retarget; <span class="text-cyan-300">Spring Physics ($F = -kx - cv$)</span> preserves momentum.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('spring')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Target Comparison Track + Live Oscillation Graph -->
+            <div class="rounded-2xl bg-[#07090E] border border-white/10 p-4 space-y-4">
+              <!-- Target Buttons (0%, 33%, 66%, 100%) -->
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-mono text-slate-400">Trigger Target (Click rapidly):</span>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="setSpringTarget(0)" class="spring-target-btn rounded-lg bg-white/10 hover:bg-cyan-500/25 border border-cyan-400/30 px-2.5 py-1 text-xs font-mono text-cyan-300 transition">Node A</button>
+                  <button onclick="setSpringTarget(1)" class="spring-target-btn rounded-lg bg-white/5 hover:bg-cyan-500/25 border border-white/10 px-2.5 py-1 text-xs font-mono text-slate-300 transition">Node B</button>
+                  <button onclick="setSpringTarget(2)" class="spring-target-btn rounded-lg bg-white/5 hover:bg-cyan-500/25 border border-white/10 px-2.5 py-1 text-xs font-mono text-slate-300 transition">Node C</button>
+                  <button onclick="setSpringTarget(3)" class="spring-target-btn rounded-lg bg-white/5 hover:bg-cyan-500/25 border border-white/10 px-2.5 py-1 text-xs font-mono text-slate-300 transition">Node D</button>
+                </div>
+              </div>
+
+              <!-- Track 1: Real-Time Spring Puck -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-cyan-300">1. Velocity-Preserving Spring Puck</span>
+                  <span id="spring-vel-readout" class="text-cyan-400 tabular-nums">v = 0.0 px/s</span>
+                </div>
+                <div id="spring-track" class="relative h-9 w-full rounded-xl bg-[#0D111A] border border-white/10 flex items-center px-2">
+                  <div
+                    id="spring-puck"
+                    class="h-6 w-14 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 shadow-lg shadow-cyan-500/30 flex items-center justify-center text-[10px] font-mono font-bold text-obsidian"
+                  >
+                    SPRING
+                  </div>
+                </div>
+              </div>
+
+              <!-- Track 2: Standard CSS Transition Puck -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">2. Fixed Duration CSS (`0.65s ease-in-out`)</span>
+                  <span class="text-slate-500">Resets curve on interrupt</span>
+                </div>
+                <div class="relative h-9 w-full rounded-xl bg-[#0D111A] border border-white/10 flex items-center px-2">
+                  <div
+                    id="css-puck"
+                    class="h-6 w-14 rounded-lg bg-rose-500/80 border border-rose-300/40 flex items-center justify-center text-[10px] font-mono font-bold text-white transition-transform duration-[650ms] ease-in-out"
+                  >
+                    CSS
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Spring Oscillation & Displacement Canvas Graph -->
+              <div class="relative h-24 w-full rounded-xl bg-[#0D111A] border border-white/5 overflow-hidden">
+                <canvas id="spring-graph-canvas" class="h-full w-full block"></canvas>
+                <span class="pointer-events-none absolute top-1.5 left-2.5 text-[10px] font-mono text-slate-500">
+                  LIVE DISPLACEMENT CURVE x(t)
+                </span>
+              </div>
+            </div>
+
+            <!-- Stiffness, Damping, Mass Sliders -->
+            <div class="grid grid-cols-3 gap-4 pt-1">
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Stiffness (k)</span>
+                  <span id="spring-k-val" class="text-cyan-300 tabular-nums">220</span>
+                </div>
+                <input id="spring-k" type="range" min="60" max="500" value="220" class="w-full" oninput="updateSpringParams()" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Damping (c)</span>
+                  <span id="spring-c-val" class="text-indigo-300 tabular-nums">16</span>
+                </div>
+                <input id="spring-c" type="range" min="4" max="45" value="16" class="w-full" oninput="updateSpringParams()" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Mass (m)</span>
+                  <span id="spring-m-val" class="text-rose-300 tabular-nums">1.0</span>
+                </div>
+                <input id="spring-m" type="range" min="5" max="30" value="10" class="w-full" oninput="updateSpringParams()" />
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====================================================================
+             CARD D: SVG MOTION — PATH TRACING & GOOEY LIQUID FILTER (6 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-6 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-400">Card D // Vector &amp; Filter Matrix</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">SVG Path Tracing &amp; Gooey Liquid Filter</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Switch between <code class="text-slate-200">stroke-dashoffset</code> circuit tracing and an interactive <code class="text-slate-200">feColorMatrix</code> liquid metaball stage.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('svg-goo')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Mode Switcher Tabs -->
+            <div class="flex items-center justify-between bg-[#07090E] p-1.5 rounded-xl border border-white/10">
+              <div class="flex items-center gap-1">
+                <button
+                  id="svg-tab-goo"
+                  onclick="switchSvgLabTab('goo')"
+                  class="rounded-lg bg-cyan-500/20 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition"
+                >
+                  1. Liquid Gooey Metaballs
+                </button>
+                <button
+                  id="svg-tab-circuit"
+                  onclick="switchSvgLabTab('circuit')"
+                  class="rounded-lg bg-transparent border border-transparent px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-white transition"
+                >
+                  2. Stroke-Dashoffset Blueprint
+                </button>
+              </div>
+              <span class="hidden sm:inline text-[11px] font-mono text-slate-500 pr-2">60-120fps Vector GPU</span>
+            </div>
+
+            <!-- Sub-Panel 1: Interactive Gooey / Liquid SVG Filter Stage -->
+            <div id="svg-panel-goo" class="space-y-3">
+              <div
+                id="goo-stage"
+                class="relative h-56 w-full rounded-2xl bg-[#07090E] border border-white/10 overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center select-none"
+              >
+                <!-- Filtered Container using url(#liquid-goo-filter) -->
+                <div
+                  class="relative h-full w-full flex items-center justify-center"
+                  style="filter: url(#liquid-goo-filter);"
+                >
+                  <!-- Central Anchor Blob -->
+                  <div class="h-20 w-20 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500"></div>
+                  <!-- Orbiting Blob 1 -->
+                  <div id="goo-orbit-1" class="absolute h-14 w-14 rounded-full bg-cyan-400"></div>
+                  <!-- Orbiting Blob 2 -->
+                  <div id="goo-orbit-2" class="absolute h-12 w-12 rounded-full bg-indigo-400"></div>
+                  <!-- Pointer-Tracked Blob -->
+                  <div
+                    id="goo-cursor-blob"
+                    class="absolute h-16 w-16 rounded-full bg-rose-400 transition-transform duration-75 ease-out"
+                    style="transform: translate(65px, -10px);"
+                  ></div>
+                </div>
+
+                <div class="pointer-events-none absolute bottom-2.5 left-3 right-3 flex justify-between text-[11px] font-mono text-slate-400">
+                  <span>Move cursor inside box to fuse liquid mercury blobs</span>
+                  <span class="text-cyan-300">feGaussianBlur + feColorMatrix</span>
+                </div>
+              </div>
+
+              <!-- Viscosity Slider -->
+              <div class="flex items-center gap-4 pt-1">
+                <span class="text-xs font-mono text-slate-400 shrink-0">Liquid Viscosity (StdDeviation):</span>
+                <input
+                  id="goo-viscosity"
+                  type="range"
+                  min="6"
+                  max="22"
+                  value="13"
+                  class="w-full"
+                  oninput="updateGooViscosity(this.value)"
+                />
+                <span id="goo-viscosity-val" class="text-xs font-mono text-cyan-300 tabular-nums w-10 text-right">13px</span>
+              </div>
+            </div>
+
+            <!-- Sub-Panel 2: Interactive SVG Circuit Path Tracing -->
+            <div id="svg-panel-circuit" class="hidden space-y-3">
+              <div class="relative h-56 w-full rounded-2xl bg-[#07090E] border border-white/10 flex items-center justify-center p-4">
+                <svg viewBox="0 0 500 200" class="w-full h-full">
+                  <defs>
+                    <linearGradient id="circuit-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#22D3EE" />
+                      <stop offset="50%" stop-color="#6366F1" />
+                      <stop offset="100%" stop-color="#F43F5E" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Dim Background Guide Paths -->
+                  <path d="M 30 100 L 130 100 L 170 50 L 330 50 L 370 100 L 470 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M 80 160 L 180 160 L 220 110 L 310 110 L 350 155 L 450 155" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" stroke-linecap="round"/>
+                  <circle cx="250" cy="80" r="22" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" />
+
+                  <!-- Animated Foreground Trace Paths -->
+                  <path
+                    id="trace-path-1"
+                    d="M 30 100 L 130 100 L 170 50 L 330 50 L 370 100 L 470 100"
+                    fill="none"
+                    stroke="url(#circuit-grad)"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke-dasharray="520"
+                    stroke-dashoffset="0"
+                  />
+                  <path
+                    id="trace-path-2"
+                    d="M 80 160 L 180 160 L 220 110 L 310 110 L 350 155 L 450 155"
+                    fill="none"
+                    stroke="#22D3EE"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-dasharray="460"
+                    stroke-dashoffset="0"
+                  />
+                  <circle
+                    id="trace-path-3"
+                    cx="250"
+                    cy="80"
+                    r="22"
+                    fill="none"
+                    stroke="#F43F5E"
+                    stroke-width="3.5"
+                    stroke-dasharray="145"
+                    stroke-dashoffset="0"
+                  />
+                </svg>
+              </div>
+
+              <!-- Scrub Slider for SVG Path Drawing -->
+              <div class="flex items-center gap-4 pt-1">
+                <span class="text-xs font-mono text-slate-400 shrink-0">Scrub DrawProgress:</span>
+                <input
+                  id="svg-draw-slider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="100"
+                  class="w-full"
+                  oninput="scrubSvgCircuit(this.value)"
+                />
+                <span id="svg-draw-val" class="text-xs font-mono text-cyan-300 tabular-nums w-12 text-right">100%</span>
+              </div>
+            </div>
+
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         4. SCROLL MECHANICS & KINETIC TYPOGRAPHY LAB
+         ========================================================================== -->
+    <section id="scroll-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+      
+      <!-- Part A: Scroll-Scrubbed 3D Exploded Layer Breakdown -->
+      <div class="rounded-3xl bg-[#0D111A] p-6 sm:p-10 specular-border ambient-shadow">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          <!-- Left Description + Manual Scrub Override Slider -->
+          <div class="lg:col-span-5 space-y-5">
+            <div class="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-400/30 px-3 py-1 text-[11px] font-mono text-indigo-300">
+              <span>02 // SCROLL-LINKED 3D CHOREOGRAPHY</span>
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Scroll-Scrubbed 3D Exploded Hardware &amp; UI Stack
+            </h2>
+
+            <p class="text-sm text-slate-400 leading-relaxed">
+              As you scroll through this section—or drag the manual override scrubber below—each architectural plane interpolates along the Z-axis in 3D isometric space (<code class="text-cyan-300">rotateX(56deg) rotateZ(-34deg)</code>) with zero main-thread layout thrashing.
+            </p>
+
+            <!-- Live Progress Readout & Manual Scrubber -->
+            <div class="rounded-2xl bg-[#07090E] p-4 border border-white/10 space-y-3">
+              <div class="flex items-center justify-between text-xs font-mono">
+                <span class="text-slate-400">EXPLOSION SEPARATION PROGRESS</span>
+                <span id="explode-progress-val" class="text-cyan-400 font-bold tabular-nums">65%</span>
+              </div>
+              <input
+                id="explode-scrub-slider"
+                type="range"
+                min="0"
+                max="100"
+                value="65"
+                class="w-full"
+                oninput="updateExplodedStack(this.value, true)"
+              />
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>0% (Collapsed Stack)</span>
+                <span>Scroll page or drag slider</span>
+                <span>100% (Full Teardown)</span>
+              </div>
+            </div>
+
+            <!-- Layer Legend -->
+            <div class="space-y-2 text-xs font-mono">
+              <div class="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 border border-white/5">
+                <span class="text-cyan-300">L4 // Specular Glass &amp; Noise Overlay</span>
+                <span id="layer4-z" class="text-slate-400 tabular-nums">+117px Z</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 border border-white/5">
+                <span class="text-indigo-300">L3 // Spring Layout Projection DOM</span>
+                <span id="layer3-z" class="text-slate-400 tabular-nums">+58px Z</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 border border-white/5">
+                <span class="text-rose-300">L2 // WebGL Fragment Shader Canvas</span>
+                <span id="layer2-z" class="text-slate-400 tabular-nums">0px Z</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 border border-white/5">
+                <span class="text-emerald-300">L1 // 120Hz GPU Compositor Framebuffer</span>
+                <span id="layer1-z" class="text-slate-400 tabular-nums">-58px Z</span>
+              </div>
+            </div>
+
+            <button
+              onclick="openCodeInspector('exploded-stack')"
+              class="inline-flex items-center gap-2 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-4 py-2 text-xs font-mono text-cyan-300 transition-colors"
+            >
+              &lt;/&gt; Inspect 3D Scroll Scrub Code
+            </button>
+          </div>
+
+          <!-- Right 3D Isometric Stage -->
+          <div class="lg:col-span-7 flex items-center justify-center min-h-[420px] rounded-2xl bg-[#07090E] border border-white/10 relative overflow-hidden iso-scene">
+            <!-- Background Subtle Grid -->
+            <div class="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:28px_28px]"></div>
+
+            <div id="iso-stack-container" class="iso-stack relative w-64 h-64 sm:w-72 sm:h-72">
+              <!-- Layer 1: Bottom GPU Framebuffer -->
+              <div
+                id="iso-layer-1"
+                class="iso-layer absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/25 to-slate-900/95 border border-emerald-400/40 p-4 flex flex-col justify-between"
+                style="transform: translateZ(-58px);"
+              >
+                <span class="text-[10px] font-mono text-emerald-300">L1 // GPU COMPOSITOR</span>
+                <div class="grid grid-cols-4 gap-1.5 opacity-60">
+                  <div class="h-6 rounded bg-emerald-400/30"></div>
+                  <div class="h-6 rounded bg-emerald-400/20"></div>
+                  <div class="h-6 rounded bg-emerald-400/30"></div>
+                  <div class="h-6 rounded bg-emerald-400/20"></div>
+                </div>
+                <span class="text-[10px] font-mono text-slate-400">will-change: transform</span>
+              </div>
+
+              <!-- Layer 2: WebGL Shader Plane -->
+              <div
+                id="iso-layer-2"
+                class="iso-layer absolute inset-0 rounded-2xl bg-gradient-to-br from-rose-500/25 via-fuchsia-500/15 to-slate-900/90 border border-rose-400/40 p-4 flex flex-col justify-between"
+                style="transform: translateZ(0px);"
+              >
+                <span class="text-[10px] font-mono text-rose-300">L2 // GLSL FRAGMENT SHADER</span>
+                <div class="h-20 w-full rounded-xl bg-gradient-to-r from-rose-500/30 via-indigo-500/30 to-cyan-400/30 border border-white/10 flex items-center justify-center font-mono text-xs text-white">
+                  u_time * simplexNoise()
+                </div>
+                <span class="text-[10px] font-mono text-slate-400">MeshTransmissionMaterial</span>
+              </div>
+
+              <!-- Layer 3: Spring Layout Projection -->
+              <div
+                id="iso-layer-3"
+                class="iso-layer absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-slate-900/85 border border-indigo-400/50 p-4 flex flex-col justify-between"
+                style="transform: translateZ(58px);"
+              >
+                <span class="text-[10px] font-mono text-indigo-300">L3 // FLIP &amp; SPRING DOM</span>
+                <div class="space-y-2">
+                  <div class="h-3 w-3/4 rounded-full bg-indigo-400/40"></div>
+                  <div class="h-3 w-1/2 rounded-full bg-cyan-400/40"></div>
+                </div>
+                <span class="text-[10px] font-mono text-slate-400">layoutId="shared-pill"</span>
+              </div>
+
+              <!-- Layer 4: Top Specular Glass Cap -->
+              <div
+                id="iso-layer-4"
+                class="iso-layer absolute inset-0 rounded-2xl bg-cyan-400/15 backdrop-blur-md border border-cyan-300/60 p-4 flex flex-col justify-between"
+                style="transform: translateZ(117px);"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono font-bold text-cyan-200">L4 // SPECULAR ACRYLIC</span>
+                  <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
+                </div>
+                <div class="rounded-xl bg-white/10 border border-white/20 p-3 text-center">
+                  <div class="text-xs font-bold text-white">1px Hairline + 3% Grain</div>
+                  <div class="text-[10px] font-mono text-cyan-200 mt-0.5">feTurbulence Overlay</div>
+                </div>
+                <span class="text-[10px] font-mono text-cyan-200">backdrop-saturate(190%)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Part B: Scroll-Scrubbed Opacity Reading -->
+      <div class="rounded-3xl bg-[#0D111A] p-6 sm:p-10 specular-border ambient-shadow space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-mono uppercase tracking-wider text-cyan-400">03 // SCROLL-SCRUBBED OPACITY READING</span>
+            <span class="text-xs font-mono text-slate-500">(Scroll page or drag reading scrubber)</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <input
+              id="opacity-reading-slider"
+              type="range"
+              min="0"
+              max="100"
+              value="55"
+              class="w-36"
+              oninput="updateOpacityReading(this.value)"
+            />
+            <button
+              onclick="openCodeInspector('scroll-opacity')"
+              class="rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3.5 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+            >
+              &lt;/&gt; Inspect Code
+            </button>
+          </div>
+        </div>
+
+        <p
+          id="scrub-reading-paragraph"
+          class="text-2xl sm:text-4xl font-semibold leading-snug tracking-tight select-none"
+        >
+          <!-- Populated dynamically with word spans for per-word opacity illumination -->
+        </p>
+      </div>
+
+      <!-- Part C: Velocity-Reactive Kinetic Marquee -->
+      <div class="rounded-3xl bg-[#0D111A] py-7 specular-border ambient-shadow overflow-hidden space-y-4">
+        <div class="px-6 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-mono uppercase tracking-wider text-rose-400">04 // VELOCITY-REACTIVE KINETIC MARQUEE</span>
+            <span id="marquee-skew-readout" class="rounded bg-white/5 px-2 py-0.5 text-[11px] font-mono text-cyan-300 tabular-nums">
+              skewX: 0.0° | speed: 1.0x
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              onmousedown="impulseMarqueeVelocity(18)"
+              ontouchstart="impulseMarqueeVelocity(18)"
+              class="rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 px-3.5 py-1 text-xs font-mono text-rose-300 transition"
+            >
+              ⚡ Impulse Scroll Velocity Burst
+            </button>
+            <button
+              onclick="openCodeInspector('marquee')"
+              class="rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1 text-xs font-mono text-cyan-300 transition-colors"
+            >
+              &lt;/&gt;
+            </button>
+          </div>
+        </div>
+
+        <!-- Infinite Ticker Track -->
+        <div class="relative w-full overflow-hidden py-2 border-y border-white/[0.06] bg-[#07090E]/60">
+          <div
+            id="kinetic-marquee-track"
+            class="flex whitespace-nowrap gap-10 text-3xl sm:text-5xl font-black tracking-tighter text-white/90 will-change-transform select-none"
+          >
+            <span class="flex items-center gap-10">
+              <span>120FPS COMPOSITOR</span>
+              <span class="text-cyan-400">✦</span>
+              <span>SPRING INTERRUPTIBILITY</span>
+              <span class="text-indigo-400">✦</span>
+              <span>SPECULAR 1PX HAIRLINE</span>
+              <span class="text-rose-400">✦</span>
+              <span>VIEW TRANSITIONS API</span>
+              <span class="text-cyan-400">✦</span>
+            </span>
+            <span class="flex items-center gap-10" aria-hidden="true">
+              <span>120FPS COMPOSITOR</span>
+              <span class="text-cyan-400">✦</span>
+              <span>SPRING INTERRUPTIBILITY</span>
+              <span class="text-indigo-400">✦</span>
+              <span>SPECULAR 1PX HAIRLINE</span>
+              <span class="text-rose-400">✦</span>
+              <span>VIEW TRANSITIONS API</span>
+              <span class="text-cyan-400">✦</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==========================================================================
+         5. COMPONENT MICRO-INTERACTIONS & OPTIMISTIC UI
+         ========================================================================== -->
+    <section id="micro-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-indigo-400 mb-2">
+            <span>05 // MICRO-INTERACTIONS &amp; ZERO-LATENCY UX</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            Morphing Pagination &amp; Optimistic State
+          </h2>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Card: Morphing Pagination Pill Carousel (6 Cols) -->
+        <div class="bento-card lg:col-span-6 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-5">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-cyan-400">Pattern 01 // Progress Pill</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">Morphing Pagination Carousel</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Active pagination dot expands horizontally via spring easing while filling with a real-time autoplay progress bar.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('carousel')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Slide Viewport -->
+            <div
+              id="carousel-viewport"
+              onmouseenter="setCarouselPaused(true)"
+              onmouseleave="setCarouselPaused(false)"
+              class="relative h-52 w-full overflow-hidden rounded-2xl bg-[#07090E] border border-white/10 p-6 flex flex-col justify-between select-none"
+            >
+              <div class="flex items-center justify-between">
+                <span id="carousel-badge" class="rounded-full bg-cyan-500/15 border border-cyan-400/30 px-2.5 py-0.5 text-[10px] font-mono text-cyan-300">
+                  SLIDE 01 // COMPOSITOR THREAD
+                </span>
+                <span id="carousel-pause-indicator" class="text-[11px] font-mono text-slate-500">
+                  Autoplay Active (Hover to pause)
+                </span>
+              </div>
+
+              <div id="carousel-content" class="transition-all duration-300">
+                <h4 id="carousel-title" class="text-xl font-bold text-white">
+                  Zero-Layout-Shift Transform Pipeline
+                </h4>
+                <p id="carousel-desc" class="text-xs text-slate-400 mt-1.5 max-w-md leading-relaxed">
+                  Animating only translate3d(), scale(), and opacity bypasses browser CPU layout and paint steps for locked 120Hz fluidity.
+                </p>
+              </div>
+
+              <!-- Bottom Controls & Morphing Dots -->
+              <div class="flex items-center justify-between pt-2">
+                <!-- Morphing Pagination Dots -->
+                <div class="flex items-center gap-2" id="carousel-dots">
+                  <!-- Rendered by JS -->
+                </div>
+
+                <!-- Prev / Next Arrow Buttons -->
+                <div class="flex items-center gap-1.5">
+                  <button
+                    onclick="stepCarousel(-1)"
+                    class="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 transition"
+                    aria-label="Previous slide"
+                  >
+                    ←
+                  </button>
+                  <button
+                    onclick="stepCarousel(1)"
+                    class="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 transition"
+                    aria-label="Next slide"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Card: Inline Button State Morphing + Sonner Stacked Toasts (6 Cols) -->
+        <div class="bento-card lg:col-span-6 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-5">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-indigo-400">Pattern 02 // Optimistic Feedback</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">Inline Button Morph &amp; Sonner Toasts</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Button smoothly morphs width across <code class="text-slate-200">Idle → Validating → Deployed</code> states while spawning 3D-stacked bottom-right toasts.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('sonner')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Interactive Morphing Button Sandbox -->
+            <div class="h-52 w-full rounded-2xl bg-[#07090E] border border-white/10 p-6 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+                <span>OPTIMISTIC TRANSACTION ENGINE</span>
+                <span id="deploy-counter" class="text-cyan-400 tabular-nums">Commits: 142</span>
+              </div>
+
+              <!-- Center Morphing Button Row -->
+              <div class="flex flex-wrap items-center gap-3 my-auto">
+                <button
+                  id="morph-submit-btn"
+                  onclick="triggerMorphDeploy()"
+                  class="relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-indigo-500 text-obsidian font-semibold text-sm h-11 px-6 shadow-lg shadow-cyan-500/20 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  style="width: 215px;"
+                >
+                  <span id="morph-btn-content" class="flex items-center gap-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Deploy Edge Bundle</span>
+                  </span>
+                </button>
+
+                <button
+                  onclick="spawnSonnerToast('Shader Pipeline Compiled', 'GLSL fragment pass optimized in 4.2ms at 120Hz.', 'info')"
+                  class="rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 h-11 px-4 text-xs font-mono text-slate-200 transition"
+                >
+                  + Spawn Stacked Toast
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>Hover the toast stack in bottom-right corner to fan out</span>
+                <button onclick="clearAllToasts()" class="text-slate-400 hover:text-white underline">Clear Toasts</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         6. ADVANCED SPATIAL, FLIP LAYOUT, REFRACTION & ACOUSTIC UI LAB
+         ========================================================================== -->
+    <section id="advanced-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-rose-400 mb-2">
+            <span>06 // FLIP PROJECTION, REFRACTION, GESTURE SHEETS &amp; AUDIO SYNTH</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            Spatial Layout, Liquid Optics &amp; Haptic Acoustics
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-slate-400">
+          4 Additional Deep-Dive Engineering Sandboxes
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- ====================================================================
+             LAB 06A: FLIP SHARED-ELEMENT LAYOUT PROJECTION ENGINE (7 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-7 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-5">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-cyan-400">Lab 06A // First-Last-Invert-Play</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">FLIP Shared-Element Layout Projection</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Measures each element's <code class="text-slate-200">getBoundingClientRect()</code> before and after a CSS Grid/Flex change, then animates the inverted delta via GPU <code class="text-slate-200">translate3d</code> and <code class="text-slate-200">scale</code>.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('flip')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Layout Mode Switcher Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-[#07090E] p-1.5 rounded-xl border border-white/10">
+              <div class="flex items-center gap-1">
+                <button
+                  id="flip-btn-grid"
+                  onclick="switchFlipLayout('grid')"
+                  class="rounded-lg bg-cyan-500/20 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition"
+                >
+                  2×2 Bento Grid
+                </button>
+                <button
+                  id="flip-btn-list"
+                  onclick="switchFlipLayout('list')"
+                  class="rounded-lg bg-transparent border border-transparent px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-white transition"
+                >
+                  Linear Stack
+                </button>
+                <button
+                  id="flip-btn-hero"
+                  onclick="switchFlipLayout('hero')"
+                  class="rounded-lg bg-transparent border border-transparent px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-white transition"
+                >
+                  Spotlight Split
+                </button>
+              </div>
+              <button
+                onclick="shuffleFlipCards()"
+                class="rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-400/30 px-3 py-1.5 text-xs font-mono text-indigo-300 transition"
+              >
+                ⇄ FLIP Shuffle Order
+              </button>
+            </div>
+
+            <!-- FLIP Container Stage -->
+            <div
+              id="flip-stage"
+              class="grid grid-cols-2 gap-3 min-h-[240px] rounded-2xl bg-[#07090E] border border-white/10 p-3.5"
+            >
+              <div
+                data-flip-id="card-1"
+                onclick="promoteFlipCard(this)"
+                class="flip-item cursor-pointer rounded-xl bg-gradient-to-br from-cyan-500/20 to-slate-900 border border-cyan-400/30 p-3.5 flex flex-col justify-between hover:border-cyan-300/60"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="rounded bg-cyan-400/20 px-2 py-0.5 text-[10px] font-mono text-cyan-300">NODE 01</span>
+                  <span class="text-[10px] font-mono text-slate-400">Click to Promote ↗</span>
+                </div>
+                <div class="mt-3">
+                  <div class="text-sm font-bold text-white">Shader Pipeline</div>
+                  <div class="text-[11px] text-slate-400">GLSL Fragment Pass</div>
+                </div>
+              </div>
+
+              <div
+                data-flip-id="card-2"
+                onclick="promoteFlipCard(this)"
+                class="flip-item cursor-pointer rounded-xl bg-gradient-to-br from-indigo-500/20 to-slate-900 border border-indigo-400/30 p-3.5 flex flex-col justify-between hover:border-indigo-300/60"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="rounded bg-indigo-400/20 px-2 py-0.5 text-[10px] font-mono text-indigo-300">NODE 02</span>
+                  <span class="text-[10px] font-mono text-slate-400">Click to Promote ↗</span>
+                </div>
+                <div class="mt-3">
+                  <div class="text-sm font-bold text-white">Spring Solver</div>
+                  <div class="text-[11px] text-slate-400">Hooke's Law 120Hz</div>
+                </div>
+              </div>
+
+              <div
+                data-flip-id="card-3"
+                onclick="promoteFlipCard(this)"
+                class="flip-item cursor-pointer rounded-xl bg-gradient-to-br from-rose-500/20 to-slate-900 border border-rose-400/30 p-3.5 flex flex-col justify-between hover:border-rose-300/60"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="rounded bg-rose-400/20 px-2 py-0.5 text-[10px] font-mono text-rose-300">NODE 03</span>
+                  <span class="text-[10px] font-mono text-slate-400">Click to Promote ↗</span>
+                </div>
+                <div class="mt-3">
+                  <div class="text-sm font-bold text-white">Specular Acrylic</div>
+                  <div class="text-[11px] text-slate-400">1px Hairline Optics</div>
+                </div>
+              </div>
+
+              <div
+                data-flip-id="card-4"
+                onclick="promoteFlipCard(this)"
+                class="flip-item cursor-pointer rounded-xl bg-gradient-to-br from-emerald-500/20 to-slate-900 border border-emerald-400/30 p-3.5 flex flex-col justify-between hover:border-emerald-300/60"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="rounded bg-emerald-400/20 px-2 py-0.5 text-[10px] font-mono text-emerald-300">NODE 04</span>
+                  <span class="text-[10px] font-mono text-slate-400">Click to Promote ↗</span>
+                </div>
+                <div class="mt-3">
+                  <div class="text-sm font-bold text-white">View Transitions</div>
+                  <div class="text-[11px] text-slate-400">Shared DOM Snapshot</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====================================================================
+             LAB 06B: CHROMATIC DISPERSION & LIQUID REFRACTION LENS (5 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-5 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-rose-400">Lab 06B // Optical Refraction</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">Chromatic Liquid Glass Lens</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Combines SVG <code class="text-slate-200">feDisplacementMap</code> refraction with velocity-driven RGB channel chromatic aberration.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('refraction')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Interactive Refraction Viewport -->
+            <div
+              id="refraction-stage"
+              class="relative h-60 w-full rounded-2xl bg-[#07090E] border border-white/10 overflow-hidden cursor-none select-none flex items-center justify-center"
+            >
+              <!-- Background Geometric Pattern & Kinetic Text being Refracted -->
+              <div class="absolute inset-0 opacity-25 bg-[linear-gradient(45deg,#22D3EE_1px,transparent_1px),linear-gradient(-45deg,#6366F1_1px,transparent_1px)] [background-size:24px_24px]"></div>
+
+              <div
+                style="filter: url(#chromatic-liquid-lens);"
+                class="relative z-10 text-center space-y-1 px-4 pointer-events-none"
+              >
+                <div
+                  id="chromatic-headline"
+                  class="text-3xl sm:text-4xl font-black tracking-tighter text-white transition-all duration-75"
+                  style="text-shadow: -3px 0px 0px rgba(244,63,94,0.85), 3px 0px 0px rgba(34,211,238,0.85);"
+                >
+                  LIQUID OPTICS
+                </div>
+                <div class="text-xs font-mono text-cyan-300 tracking-widest uppercase">
+                  feDisplacementMap // RGB Split
+                </div>
+              </div>
+
+              <!-- Cursor-Following Refractive Glass Puck -->
+              <div
+                id="refraction-lens-puck"
+                class="pointer-events-none absolute h-28 w-28 rounded-full border border-white/40 bg-white/[0.06] backdrop-blur-[3px] shadow-[inset_0_0_20px_rgba(255,255,255,0.35),0_10px_30px_rgba(0,0,0,0.6)] flex items-center justify-center"
+                style="transform: translate3d(0px, 0px, 0);"
+              >
+                <span class="text-[9px] font-mono text-white/70">LENS</span>
+              </div>
+
+              <div class="pointer-events-none absolute bottom-2.5 left-3 right-3 flex justify-between text-[10px] font-mono text-slate-400">
+                <span>Move pointer across lens field</span>
+                <span id="refraction-readout" class="text-rose-300 tabular-nums">Scale: 28 | RGB: 3px</span>
+              </div>
+            </div>
+
+            <!-- Sliders for Displacement Scale & Chromatic Split -->
+            <div class="grid grid-cols-2 gap-4 pt-1">
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Refraction Warp</span>
+                  <span id="lens-scale-val" class="text-cyan-300 tabular-nums">28</span>
+                </div>
+                <input id="lens-scale-slider" type="range" min="0" max="75" value="28" class="w-full" oninput="updateRefractionLens()" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px] font-mono">
+                  <span class="text-slate-400">Chromatic Split</span>
+                  <span id="lens-rgb-val" class="text-rose-300 tabular-nums">3.0px</span>
+                </div>
+                <input id="lens-rgb-slider" type="range" min="0" max="12" value="3" class="w-full" oninput="updateRefractionLens()" />
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====================================================================
+             LAB 06C: VAUL iOS BOTTOM SHEET & LOGARITHMIC RUBBER-BANDING (6 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-6 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-indigo-400">Lab 06C // Native Mobile Physics</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">iOS Sheet Depth Scale &amp; Rubber-Banding</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Opening the sheet scales the background viewport to <code class="text-slate-200">0.92</code>. Dragging upward applies logarithmic resistance: $f(x) = 1 - \frac{1}{(x \cdot c / d) + 1}$.
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('vaul')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- Simulated Mobile / App Viewport Frame -->
+            <div class="relative h-64 w-full rounded-2xl bg-black border border-white/15 overflow-hidden p-3 flex flex-col justify-between select-none">
+              <!-- Background App Surface that Scales Down & Rounds Corners -->
+              <div
+                id="vaul-bg-app"
+                class="h-full w-full rounded-xl bg-[#0D111A] border border-white/10 p-4 flex flex-col justify-between transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-top"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-white">Background App Viewport</span>
+                  <span id="vaul-scale-badge" class="rounded bg-white/5 px-2 py-0.5 text-[10px] font-mono text-cyan-300 tabular-nums">
+                    scale(1.00) | radius: 12px
+                  </span>
+                </div>
+
+                <div class="my-auto text-center space-y-2">
+                  <p class="text-xs text-slate-400">
+                    Trigger the physics drawer below or drag the overscroll slider to test rubber-band damping.
+                  </p>
+                  <button
+                    onclick="toggleVaulDrawer(true)"
+                    class="rounded-full bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 px-4 py-1.5 text-xs font-mono text-indigo-200 transition"
+                  >
+                    ↑ Present iOS Bottom Sheet
+                  </button>
+                </div>
+
+                <div class="text-[10px] font-mono text-slate-500 flex justify-between">
+                  <span>cubic-bezier(0.32, 0.72, 0, 1)</span>
+                  <span>iOS 18 Depth Curve</span>
+                </div>
+              </div>
+
+              <!-- Interactive Bottom Sheet Overlay -->
+              <div
+                id="vaul-sheet"
+                class="absolute inset-x-3 bottom-0 h-44 rounded-t-2xl bg-[#161E31]/95 backdrop-blur-xl border-t border-x border-white/20 p-4 flex flex-col justify-between shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                style="transform: translate3d(0, 105%, 0);"
+              >
+                <!-- Drag Handle Pill -->
+                <div class="w-full flex flex-col items-center gap-1">
+                  <div class="h-1.5 w-10 rounded-full bg-white/30"></div>
+                  <div class="w-full flex items-center justify-between pt-1">
+                    <span class="text-xs font-bold text-white">Gesture Sheet Active</span>
+                    <button
+                      onclick="toggleVaulDrawer(false)"
+                      class="rounded-lg bg-white/10 hover:bg-white/20 px-2.5 py-0.5 text-[10px] font-mono text-slate-200"
+                    >
+                      Dismiss ↓
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Rubber-Band Overscroll Tester inside Sheet -->
+                <div class="rounded-xl bg-[#07090E]/90 p-3 border border-white/10 space-y-1.5">
+                  <div class="flex justify-between text-[10px] font-mono">
+                    <span class="text-slate-400">Raw Pull Input vs. Damped Output:</span>
+                    <span id="rubber-readout" class="text-cyan-300 tabular-nums">0px → 0.0px</span>
+                  </div>
+                  <input
+                    id="rubber-pull-slider"
+                    type="range"
+                    min="0"
+                    max="200"
+                    value="0"
+                    class="w-full"
+                    oninput="testRubberBandPull(this.value)"
+                    onchange="releaseRubberBandPull()"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====================================================================
+             LAB 06D: PROCEDURAL WEB AUDIO SYNTH & GOOGLE SITES EXPORT (6 COLS)
+             ==================================================================== -->
+        <article class="bento-card lg:col-span-6 p-6 ambient-shadow flex flex-col justify-between">
+          <div class="bento-card-border"></div>
+
+          <div class="relative z-10 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-400">Lab 06D // Acoustic UI &amp; Deployment</span>
+                <h3 class="text-xl font-semibold text-white mt-0.5">Procedural Web Audio Synth &amp; Host Export</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Synthesizes tactile UI micro-sounds in real time using browser <code class="text-slate-200">AudioContext</code> oscillators (zero external MP3s).
+                </p>
+              </div>
+              <button
+                onclick="openCodeInspector('audio-synth')"
+                class="shrink-0 rounded-full bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors"
+              >
+                &lt;/&gt; Inspect Code
+              </button>
+            </div>
+
+            <!-- 4 Tactile Sound Triggers -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <button
+                onclick="playProceduralSound('tick')"
+                class="rounded-xl bg-[#07090E] hover:bg-cyan-500/15 border border-white/10 hover:border-cyan-400/40 p-3 text-left transition group"
+              >
+                <div class="text-xs font-mono font-bold text-cyan-300 group-hover:scale-105 transition-transform">01 // TICK</div>
+                <div class="text-[10px] text-slate-400 mt-1">1.8kHz Sine Impulse</div>
+              </button>
+
+              <button
+                onclick="playProceduralSound('pop')"
+                class="rounded-xl bg-[#07090E] hover:bg-indigo-500/15 border border-white/10 hover:border-indigo-400/40 p-3 text-left transition group"
+              >
+                <div class="text-xs font-mono font-bold text-indigo-300 group-hover:scale-105 transition-transform">02 // SNAP</div>
+                <div class="text-[10px] text-slate-400 mt-1">Pitch-Envelope Pop</div>
+              </button>
+
+              <button
+                onclick="playProceduralSound('chime')"
+                class="rounded-xl bg-[#07090E] hover:bg-rose-500/15 border border-white/10 hover:border-rose-400/40 p-3 text-left transition group"
+              >
+                <div class="text-xs font-mono font-bold text-rose-300 group-hover:scale-105 transition-transform">03 // CHIME</div>
+                <div class="text-[10px] text-slate-400 mt-1">Harmonic Fifth Glass</div>
+              </button>
+
+              <button
+                onclick="playProceduralSound('confirm')"
+                class="rounded-xl bg-[#07090E] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-400/40 p-3 text-left transition group"
+              >
+                <div class="text-xs font-mono font-bold text-emerald-300 group-hover:scale-105 transition-transform">04 // DEPLOY</div>
+                <div class="text-[10px] text-slate-400 mt-1">Sub-Bass Triad</div>
+              </button>
+            </div>
+
+            <!-- Global Hover Sound Toggle + Google Sites Export Helper -->
+            <div class="rounded-2xl bg-[#07090E] border border-white/10 p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">Global UI Hover &amp; Click Acoustic Feedback</div>
+                  <div class="text-[11px] text-slate-400">Play subtle 8ms mechanical ticks when hovering interactive buttons</div>
+                </div>
+                <button
+                  id="global-sound-toggle"
+                  onclick="toggleGlobalAcousticFeedback()"
+                  class="rounded-full bg-white/10 border border-white/15 px-3 py-1 text-xs font-mono text-slate-300 transition"
+                >
+                  Audio: Muted
+                </button>
+              </div>
+
+              <div class="border-t border-white/[0.07] pt-3 flex flex-wrap items-center justify-between gap-2">
+                <div class="text-[11px] font-mono text-slate-400">
+                  Ready for <span class="text-cyan-300">Google Sites (Embed Code)</span> or <span class="text-emerald-300">Firebase / GitHub Pages ($0/mo)</span>
+                </div>
+                <button
+                  onclick="copyFullHtmlForGoogleSites()"
+                  class="rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition"
+                >
+                  Copy Full Single-File HTML
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+       SONNER-STYLE STACKED TOAST VIEWPORT (BOTTOM RIGHT)
+       ========================================================================== -->
+  <div
+    id="toast-viewport"
+    onmouseenter="setToastStackExpanded(true)"
+    onmouseleave="setToastStackExpanded(false)"
+    aria-live="polite"
+  ></div>
+
+  <!-- ==========================================================================
+       COMMAND PALETTE MODAL (Cmd + K)
+       ========================================================================== -->
+  <div
+    id="cmdk-backdrop"
+    onclick="if(event.target === this) closeCommandPalette()"
+    class="fixed inset-0 z-50 hidden items-start justify-center bg-black/70 backdrop-blur-md pt-20 sm:pt-28 px-4 transition-opacity"
+  >
+    <div class="w-full max-w-xl rounded-2xl bg-[#0D111A] specular-border ambient-shadow overflow-hidden">
+      <!-- Search Input Bar -->
+      <div class="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.08]">
+        <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          id="cmdk-input"
+          type="text"
+          placeholder="Filter UI techniques, physics labs, or inspect production code..."
+          class="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+          oninput="filterCommandPalette(this.value)"
+        />
+        <kbd class="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-slate-400">ESC</kbd>
+      </div>
+
+      <!-- Command List -->
+      <div id="cmdk-list" class="max-h-80 overflow-y-auto p-2 space-y-1">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between px-4 py-2.5 bg-[#07090E] border-t border-white/[0.06] text-[11px] font-mono text-slate-500">
+        <div class="flex items-center gap-3">
+          <span><strong class="text-slate-300">↑↓</strong> Navigate</span>
+          <span><strong class="text-slate-300">↵</strong> Execute / Jump</span>
+        </div>
+        <span class="text-cyan-400/80">12 UI Patterns Indexed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       6. LIVE CODE INSPECTOR DRAWER (SLIDE-OVER)
+       ========================================================================== -->
+  <div
+    id="code-drawer-backdrop"
+    onclick="if(event.target === this) closeCodeInspector()"
+    class="fixed inset-0 z-50 hidden justify-end bg-black/65 backdrop-blur-sm transition-opacity"
+  >
+    <aside class="w-full max-w-2xl bg-[#0D111A] h-full border-l border-white/10 p-6 flex flex-col justify-between overflow-hidden ambient-shadow">
+      <!-- Drawer Header -->
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <span id="code-drawer-tag" class="text-[11px] font-mono uppercase tracking-wider text-cyan-400">PRODUCTION SNIPPET</span>
+          <h3 id="code-drawer-title" class="text-lg font-bold text-white mt-0.5">Technique Implementation</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            onclick="copyInspectorCode()"
+            id="copy-code-btn"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition"
+          >
+            <span>Copy Code</span>
+          </button>
+          <button
+            onclick="closeCodeInspector()"
+            class="rounded-lg bg-white/5 hover:bg-white/10 p-1.5 text-slate-400 hover:text-white transition"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Code Display Pre Block -->
+      <div class="my-4 flex-1 overflow-y-auto rounded-xl bg-[#07090E] border border-white/10 p-4 font-mono text-xs leading-relaxed text-slate-200">
+        <pre id="code-drawer-content" class="whitespace-pre-wrap break-words"></pre>
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs font-mono text-slate-400">
+        <span>Zero external runtime dependencies required</span>
+        <button onclick="closeCodeInspector()" class="text-cyan-400 hover:underline">Close Inspector</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ==========================================================================
+       FOOTER
+       ========================================================================== -->
+  <footer class="border-t border-white/[0.07] bg-[#07090E] py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+        <span class="text-slate-300">AETHER // 120Hz UI/UX &amp; Motion Engineering Lab</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="openCommandPalette()" class="hover:text-cyan-300 transition">Press ⌘K to Search</button>
+        <span>•</span>
+        <a href="#hero-section" class="hover:text-cyan-300 transition">Back to Top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       MASTER JAVASCRIPT ENGINE (120Hz RAF LOOP, PHYSICS, SHADERS & SNIPPETS)
+       ========================================================================== -->
+  <script>
+    /* ==========================================================================
+       1. PRODUCTION CODE SNIPPETS DATABASE FOR LIVE CODE INSPECTOR
+       ========================================================================== */
+    const CODE_SNIPPETS = {
+      'telemetry': {
+        tag: '120Hz RAF TELEMETRY',
+        title: 'Frame-Rate Independent Lerp & Telemetry Loop',
+        code: `// Frame-rate independent damping (works identically on 60Hz, 120Hz, 240Hz)
+function damp(current, target, lambda, deltaTimeSeconds) {
+  return current + (target - current) * (1 - Math.exp(-lambda * deltaTimeSeconds));
+}
+
+let lastTime = performance.now();
+function tick(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.1);
+  const fps = Math.round(1 / Math.max(dt, 0.001));
+  lastTime = now;
+
+  // Smoothly interpolate scroll velocity & cursor vectors
+  smoothVelocity = damp(smoothVelocity, rawScrollVelocity, 12, dt);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);`
+      },
+      'navbar': {
+        tag: 'NAVIGATION ARCHITECTURE',
+        title: 'Dynamic Island Morphing Header & Shared-Layout Sliding Pill',
+        code: `// 1. Dynamic Island Scroll Morph (> 60px threshold)
+window.addEventListener('scroll', () => {
+  const isCompact = window.scrollY > 60;
+  navbar.classList.toggle('max-w-3xl', isCompact);
+  navbar.classList.toggle('mt-3', isCompact);
+  navbar.classList.toggle('rounded-full', isCompact);
+  navbar.classList.toggle('specular-border', isCompact);
+}, { passive: true });
+
+// 2. Shared-Layout Sliding Pill Indicator (FLIP Projection)
+navItems.forEach((item) => {
+  item.addEventListener('mouseenter', () => {
+    const rect = item.getBoundingClientRect();
+    const parentRect = container.getBoundingClientRect();
+    slidingPill.style.width = \`\${rect.width}px\`;
+    slidingPill.style.transform = \`translateX(\${rect.left - parentRect.left - 4}px)\`;
+  });
+});`
+      },
+      'hero-type': {
+        tag: 'KINETIC TYPOGRAPHY',
+        title: 'Masked Staggered Line Reveal & Cipher Text Decode',
+        code: `/* Masked Staggered Line Reveal CSS */
+.line-mask { overflow: hidden; display: block; }
+.line-inner {
+  transform: translateY(110%);
+  opacity: 0;
+  transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.75s ease;
+}
+.line-inner.revealed { transform: translateY(0%); opacity: 1; }
+
+/* Cipher / Scramble Text Decode Engine */
+const GLYPHS = '01アイウエオカキクケコ!<>-_\\\\/[]{}—=+*^?#';
+function triggerCipherDecode(el, finalString) {
+  let iteration = 0;
+  const interval = setInterval(() => {
+    el.innerText = finalString.split('').map((char, idx) => {
+      if (char === ' ') return ' ';
+      if (idx < iteration) return finalString[idx];
+      return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    }).join('');
+    iteration += 1 / 2;
+    if (iteration >= finalString.length) clearInterval(interval);
+  }, 24);
+}`
+      },
+      'hero-canvas': {
+        tag: 'INTERACTIVE CANVAS SANDBOX',
+        title: 'Cursor-Reactive Vector Field & Rotating Conic Border Beam',
+        code: `/* CSS Houdini Typed Custom Property for Rotating Conic Border Beam */
+@property --beam-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes spinBeam { to { --beam-angle: 360deg; } }
+.conic-beam-btn::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--beam-angle), transparent 60%, #6366F1 82%, #22D3EE 96%, #fff 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: spinBeam 3.2s linear infinite;
+}`
+      },
+      'spotlight': {
+        tag: 'CURSOR PHYSICS',
+        title: 'Cursor-Tracked Radial Border Spotlight Grid',
+        code: `// Pipe pointer coordinates into each Bento Card's CSS variables
+bentoGrid.addEventListener('mousemove', (e) => {
+  for (const card of bentoCards) {
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty('--mouse-x', \`\${e.clientX - rect.left}px\`);
+    card.style.setProperty('--mouse-y', \`\${e.clientY - rect.top}px\`);
+  }
+});
+
+/* 1px Masked Radial Border Illumination */
+.bento-card-border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    360px circle at var(--mouse-x) var(--mouse-y),
+    rgba(34, 211, 238, 0.75),
+    rgba(99, 102, 241, 0.35) 35%,
+    rgba(255, 255, 255, 0.07) 70%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}`
+      },
+      'glass': {
+        tag: 'SURFACE OPTICS',
+        title: 'Multi-Layer Specular Glassmorphism & Fractal Noise',
+        code: `.premium-acrylic-glass {
+  background: rgba(13, 17, 26, 0.42);
+  /* Saturate boost prevents dark backgrounds from looking muddy */
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  /* Top-edge 1px specular highlight + multi-layered depth shadow */
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45),
+    0 20px 40px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}`
+      },
+      'tilt': {
+        tag: '3D SPATIAL INTERACTION',
+        title: '3D Perspective Card Tilt with Z-Axis Parallax & Glare',
+        code: `tiltCard.addEventListener('mousemove', (e) => {
+  const rect = tiltCard.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width - 0.5;  // -0.5 to 0.5
+  const y = (e.clientY - rect.top) / rect.height - 0.5;  // -0.5 to 0.5
+
+  const rotateY = x * 24; // Max 12 deg tilt
+  const rotateX = -y * 24;
+
+  tiltCard.style.transform = \`rotateX(\${rotateX.toFixed(2)}deg) rotateY(\${rotateY.toFixed(2)}deg)\`;
+  glare.style.opacity = '1';
+  glare.style.background = \`radial-gradient(circle at \${(x + 0.5) * 100}% \${(y + 0.5) * 100}%, rgba(255,255,255,0.28), transparent 65%)\`;
+});`
+      },
+      'spring': {
+        tag: 'HOOKE’S LAW PHYSICS',
+        title: 'Interruptible Real-Time Spring Physics Solver (F = -kx - cv)',
+        code: `// Semi-implicit Euler integration for interruptible UI springs
+function stepSpring(state, target, stiffness, damping, mass, dt) {
+  const displacement = state.position - target;
+  const springForce = -stiffness * displacement;
+  const dampingForce = -damping * state.velocity;
+  const acceleration = (springForce + dampingForce) / mass;
+
+  state.velocity += acceleration * dt;
+  state.position += state.velocity * dt;
+  return state;
+}`
+      },
+      'svg-goo': {
+        tag: 'SVG FILTER PIPELINE',
+        title: 'Liquid Mercury Gooey SVG Filter & Stroke-Dashoffset Tracing',
+        code: `<!-- SVG Gooey Liquid Filter: Blur + High-Contrast Alpha Threshold -->
+<filter id="liquid-goo-filter">
+  <feGaussianBlur in="SourceGraphic" stdDeviation="13" result="blur" />
+  <feColorMatrix
+    in="blur"
+    mode="matrix"
+    values="1 0 0 0 0  
+            0 1 0 0 0  
+            0 0 1 0 0  
+            0 0 0 24 -10"
+    result="goo" />
+  <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+</filter>
+
+/* SVG Path Tracing via stroke-dashoffset */
+path.style.strokeDasharray = totalLength;
+path.style.strokeDashoffset = totalLength * (1 - progress);`
+      },
+      'exploded-stack': {
+        tag: '3D SCROLL SCRUBBING',
+        title: 'Scroll-Scrubbed 3D Isometric Exploded Layer Stack',
+        code: `// Map scroll progress [0..1] to 3D Z-axis layer planes
+function updateExplodedStack(progress) {
+  const spread = progress * 1.8; // Max Z spread multiplier
+  layer1.style.transform = \`translateZ(\${-50 * spread}px)\`;
+  layer2.style.transform = \`translateZ(0px)\`;
+  layer3.style.transform = \`translateZ(\${50 * spread}px)\`;
+  layer4.style.transform = \`translateZ(\${100 * spread}px)\`;
+}`
+      },
+      'scroll-opacity': {
+        tag: 'EDITORIAL TYPOGRAPHY',
+        title: 'Scroll-Scrubbed Per-Word Opacity Illumination',
+        code: `// Illuminate each word smoothly based on normalized scroll progress
+words.forEach((wordSpan, index) => {
+  const wordThreshold = index / words.length;
+  const delta = (scrollProgress - wordThreshold) * 6;
+  const opacity = Math.max(0.15, Math.min(1, 0.15 + delta * 0.85));
+  wordSpan.style.opacity = opacity.toFixed(3);
+});`
+      },
+      'marquee': {
+        tag: 'VELOCITY KINETICS',
+        title: 'Scroll-Velocity Reactive Marquee with Dynamic Skew',
+        code: `// Skew and accelerate marquee track proportionally to scroll velocity
+const targetSkew = Math.max(-14, Math.min(14, scrollVelocity * 0.015));
+currentSkew = damp(currentSkew, targetSkew, 10, dt);
+marqueePos -= (baseSpeed + Math.abs(scrollVelocity) * 0.08) * dt;
+
+track.style.transform = \`translate3d(\${marqueePos % halfWidth}px, 0, 0) skewX(\${currentSkew.toFixed(2)}deg)\`;`
+      },
+      'carousel': {
+        tag: 'PAGINATION CHOREOGRAPHY',
+        title: 'Morphing Pagination Pill with Live Autoplay Fill',
+        code: `/* Active dot expands from 8px circle to 36px pill track */
+.dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 9999px;
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dot.active { width: 36px; }`
+      },
+      'sonner': {
+        tag: 'OPTIMISTIC UI & TOASTS',
+        title: 'Inline Button Width Morphing & 3D Stacked Sonner Toasts',
+        code: `// Stack toasts with scale-down depth; fan out vertically on hover
+toasts.forEach((toastEl, idxFromNewest) => {
+  if (isStackHovered) {
+    const offset = idxFromNewest * 68;
+    toastEl.style.transform = \`translate3d(0, -\${offset}px, 0) scale(1)\`;
+  } else {
+    const offset = idxFromNewest * 10;
+    const scale = 1 - idxFromNewest * 0.05;
+    toastEl.style.transform = \`translate3d(0, -\${offset}px, 0) scale(\${scale})\`;
+  }
+});`
+      },
+      'flip': {
+        tag: 'LAYOUT PROJECTION (FLIP)',
+        title: 'First-Last-Invert-Play Shared Element Transition Engine',
+        code: `// 1. FIRST: Record bounding boxes before DOM / CSS class mutation
+const firstRects = new Map();
+items.forEach(el => firstRects.set(el, el.getBoundingClientRect()));
+
+// 2. Mutate layout (e.g., switch grid template or reorder DOM nodes)
+applyNewLayoutChange();
+
+// 3. LAST & INVERT: Measure new boxes and apply inverted transform
+items.forEach(el => {
+  const first = firstRects.get(el);
+  const last = el.getBoundingClientRect();
+  const dx = first.left - last.left;
+  const dy = first.top - last.top;
+  const sw = first.width / last.width;
+  const sh = first.height / last.height;
+
+  el.style.transition = 'none';
+  el.style.transformOrigin = 'top left';
+  el.style.transform = \`translate3d(\${dx}px, \${dy}px, 0) scale(\${sw}, \${sh})\`;
+
+  // 4. PLAY: Animate back to identity matrix on next compositor frame
+  requestAnimationFrame(() => {
+    el.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
+    el.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
+  });
+});`
+      },
+      'refraction': {
+        tag: 'OPTICAL SHADER & SVG DISPLACEMENT',
+        title: 'Chromatic Dispersion & Liquid Glass Displacement Map',
+        code: `<!-- SVG feTurbulence + feDisplacementMap Refractive Filter -->
+<filter id="chromatic-liquid-lens">
+  <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="noise" />
+  <feDisplacementMap in="SourceGraphic" in2="noise" scale="28" xChannelSelector="R" yChannelSelector="G" />
+</filter>
+
+/* Dynamic RGB Channel Split via Dual Opposing Text-Shadows */
+.chromatic-aberration {
+  text-shadow:
+    calc(var(--split) * -1) 0px 0px rgba(244, 63, 94, 0.85),
+    var(--split) 0px 0px rgba(34, 211, 238, 0.85);
+}`
+      },
+      'vaul': {
+        tag: 'MOBILE GESTURE PHYSICS',
+        title: 'Logarithmic Rubber-Banding & Background Viewport Depth Scaling',
+        code: `// Apple iOS Logarithmic Rubber-Banding Formula
+// x = overscroll distance, d = container height, c = 0.55 resistance constant
+function rubberBand(distance, dimension, constant = 0.55) {
+  return (1 - (1 / ((distance * constant / dimension) + 1))) * dimension;
+}
+
+// Background App Scaling when Bottom Sheet Opens
+bgViewport.style.transform = isOpen ? 'scale(0.92) translate3d(0, -6px, 0)' : 'scale(1)';
+bgViewport.style.borderRadius = isOpen ? '20px' : '12px';`
+      },
+      'audio-synth': {
+        tag: 'WEB AUDIO API SYNTHESIS',
+        title: 'Zero-Asset Procedural UI Sound Synthesizer',
+        code: `// Synthesize a crisp 8ms mechanical UI tick using Web Audio API
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+function playMechanicalTick() {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(1800, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.018);
+
+  gain.gain.setValueAtTime(0.18, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.018);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.02);
+}`
+      }
+    };
+
+    /* ==========================================================================
+       2. COMMAND PALETTE (Cmd+K) INDEX & LOGIC
+       ========================================================================== */
+    const COMMAND_ITEMS = [
+      { title: 'Dynamic Island Morphing Navbar', category: 'Navigation', section: '#hero-section', codeKey: 'navbar' },
+      { title: 'Masked Staggered Line Reveal & Cipher Decode', category: 'Typography', section: '#hero-section', codeKey: 'hero-type' },
+      { title: 'Variable Font Axis & Tracking Scrubber', category: 'Typography', section: '#hero-section', codeKey: 'hero-type' },
+      { title: 'Magnetic CTA Buttons & Conic Border Beam', category: 'Micro-Interaction', section: '#hero-section', codeKey: 'hero-canvas' },
+      { title: 'Cursor-Tracked Radial Spotlight Bento Grid', category: 'Lighting & Shaders', section: '#bento-section', codeKey: 'spotlight' },
+      { title: 'Specular Glassmorphism & Acrylic Tuner', category: 'Surface Optics', section: '#bento-section', codeKey: 'glass' },
+      { title: '3D Perspective Card Tilt & Specular Glare', category: '3D Spatial', section: '#bento-section', codeKey: 'tilt' },
+      { title: 'Interruptible Spring Physics Engine (F = -kx - cv)', category: 'Physics Engine', section: '#bento-section', codeKey: 'spring' },
+      { title: 'SVG Gooey Liquid Mercury Filter & Path Tracing', category: 'SVG Motion', section: '#bento-section', codeKey: 'svg-goo' },
+      { title: 'Scroll-Scrubbed 3D Exploded Layer Breakdown', category: 'Scroll Mechanics', section: '#scroll-section', codeKey: 'exploded-stack' },
+      { title: 'Scroll-Scrubbed Per-Word Opacity Reading', category: 'Scroll Typography', section: '#scroll-section', codeKey: 'scroll-opacity' },
+      { title: 'Velocity-Reactive Kinetic Marquee & Sonner Toasts', category: 'Optimistic UI', section: '#micro-section', codeKey: 'sonner' },
+      { title: 'FLIP Shared-Element Layout Projection Engine', category: 'Layout Projection', section: '#advanced-section', codeKey: 'flip' },
+      { title: 'Chromatic Dispersion & Liquid Refraction Lens', category: 'Optical Shaders', section: '#advanced-section', codeKey: 'refraction' },
+      { title: 'iOS Bottom Sheet & Logarithmic Rubber-Banding', category: 'Mobile Physics', section: '#advanced-section', codeKey: 'vaul' },
+      { title: 'Procedural Web Audio UI Sound Synthesizer', category: 'Acoustic UX', section: '#advanced-section', codeKey: 'audio-synth' }
+    ];
+
+    let selectedCmdIndex = 0;
+    let filteredCommands = [...COMMAND_ITEMS];
+
+    function openCommandPalette() {
+      const backdrop = document.getElementById('cmdk-backdrop');
+      const input = document.getElementById('cmdk-input');
+      backdrop.classList.remove('hidden');
+      backdrop.classList.add('flex');
+      input.value = '';
+      selectedCmdIndex = 0;
+      filterCommandPalette('');
+      setTimeout(() => input.focus(), 20);
+    }
+
+    function closeCommandPalette() {
+      const backdrop = document.getElementById('cmdk-backdrop');
+      backdrop.classList.add('hidden');
+      backdrop.classList.remove('flex');
+    }
+
+    function filterCommandPalette(query) {
+      const q = query.trim().toLowerCase();
+      filteredCommands = COMMAND_ITEMS.filter(
+        item => item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
+      );
+      selectedCmdIndex = 0;
+      renderCommandList();
+    }
+
+    function renderCommandList() {
+      const listEl = document.getElementById('cmdk-list');
+      if (filteredCommands.length === 0) {
+        listEl.innerHTML = `<div class="py-8 text-center text-xs font-mono text-slate-500">No matching UI techniques found.</div>`;
+        return;
+      }
+      listEl.innerHTML = filteredCommands.map((item, idx) => {
+        const isSelected = idx === selectedCmdIndex;
+        return `
+          <div
+            onmouseenter="selectedCmdIndex = ${idx}; renderCommandList();"
+            class="flex items-center justify-between rounded-xl px-3.5 py-2.5 cursor-pointer transition-colors ${
+              isSelected ? 'bg-cyan-500/15 border border-cyan-400/30 text-white' : 'text-slate-300 border border-transparent hover:bg-white/5'
+            }"
+          >
+            <div onclick="executeCommandItem(${idx}, 'jump')" class="flex-1">
+              <div class="text-xs font-semibold">${item.title}</div>
+              <div class="text-[10px] font-mono text-slate-400">${item.category}</div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button
+                onclick="executeCommandItem(${idx}, 'jump')"
+                class="rounded bg-white/5 hover:bg-white/15 px-2 py-1 text-[10px] font-mono text-slate-300"
+              >
+                Jump ↵
+              </button>
+              <button
+                onclick="executeCommandItem(${idx}, 'code')"
+                class="rounded bg-cyan-500/20 hover:bg-cyan-500/30 px-2 py-1 text-[10px] font-mono text-cyan-300"
+              >
+                &lt;/&gt; Code
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function executeCommandItem(index, action) {
+      const item = filteredCommands[index];
+      if (!item) return;
+      closeCommandPalette();
+      if (action === 'code') {
+        openCodeInspector(item.codeKey);
+      } else {
+        const target = document.querySelector(item.section);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const isOpen = !document.getElementById('cmdk-backdrop').classList.contains('hidden');
+        isOpen ? closeCommandPalette() : openCommandPalette();
+        return;
+      }
+      const cmdkOpen = !document.getElementById('cmdk-backdrop').classList.contains('hidden');
+      if (cmdkOpen) {
+        if (e.key === 'Escape') closeCommandPalette();
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectedCmdIndex = (selectedCmdIndex + 1) % Math.max(1, filteredCommands.length);
+          renderCommandList();
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectedCmdIndex = (selectedCmdIndex - 1 + Math.max(1, filteredCommands.length)) % Math.max(1, filteredCommands.length);
+          renderCommandList();
+        }
+        if (e.key === 'Enter' && filteredCommands[selectedCmdIndex]) {
+          e.preventDefault();
+          executeCommandItem(selectedCmdIndex, 'jump');
+        }
+      } else if (e.key === 'Escape') {
+        closeCodeInspector();
+      }
+    });
+
+    /* ==========================================================================
+       3. LIVE CODE INSPECTOR DRAWER FUNCTIONS
+       ========================================================================== */
+    let activeSnippetText = '';
+
+    function openCodeInspector(key) {
+      const entry = CODE_SNIPPETS[key] || CODE_SNIPPETS['telemetry'];
+      document.getElementById('code-drawer-tag').textContent = entry.tag;
+      document.getElementById('code-drawer-title').textContent = entry.title;
+      document.getElementById('code-drawer-content').textContent = entry.code;
+      activeSnippetText = entry.code;
+
+      const backdrop = document.getElementById('code-drawer-backdrop');
+      backdrop.classList.remove('hidden');
+      backdrop.classList.add('flex');
+    }
+
+    function closeCodeInspector() {
+      const backdrop = document.getElementById('code-drawer-backdrop');
+      backdrop.classList.add('hidden');
+      backdrop.classList.remove('flex');
+    }
+
+    function copyInspectorCode() {
+      const tempArea = document.createElement('textarea');
+      tempArea.value = activeSnippetText;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempArea);
+
+      const btn = document.getElementById('copy-code-btn');
+      btn.innerHTML = '<span>✓ Copied to Clipboard</span>';
+      spawnSonnerToast('Production Snippet Copied', 'Ready to paste into your CSS/JS pipeline.', 'success');
+      setTimeout(() => {
+        btn.innerHTML = '<span>Copy Code</span>';
+      }, 2000);
+    }
+
+    /* ==========================================================================
+       4. DYNAMIC ISLAND NAVBAR & SHARED-LAYOUT SLIDING PILL
+       ========================================================================== */
+    let manualIslandMode = 'auto'; // 'auto' | 'compact' | 'expanded'
+
+    function applyNavbarMorphState() {
+      const nav = document.getElementById('dynamic-navbar');
+      const subtitle = document.getElementById('nav-subtitle');
+      const shouldCompact =
+        manualIslandMode === 'compact' ||
+        (manualIslandMode === 'auto' && window.scrollY > 60);
+
+      if (shouldCompact) {
+        nav.classList.remove('max-w-7xl', 'py-4', 'border-b');
+        nav.classList.add('max-w-4xl', 'mt-3', 'py-2.5', 'rounded-full', 'specular-border', 'ambient-shadow');
+        subtitle.classList.add('hidden');
+      } else {
+        nav.classList.add('max-w-7xl', 'py-4', 'border-b');
+        nav.classList.remove('max-w-4xl', 'mt-3', 'py-2.5', 'rounded-full', 'specular-border', 'ambient-shadow');
+        subtitle.classList.remove('hidden');
+      }
+    }
+
+    function toggleManualIsland() {
+      const dot = document.getElementById('island-status-dot');
+      const text = document.getElementById('island-status-text');
+      if (manualIslandMode === 'auto') {
+        manualIslandMode = 'compact';
+        dot.className = 'h-1.5 w-1.5 rounded-full bg-cyan-400';
+        text.textContent = 'Morph: Pill';
+      } else if (manualIslandMode === 'compact') {
+        manualIslandMode = 'expanded';
+        dot.className = 'h-1.5 w-1.5 rounded-full bg-emerald-400';
+        text.textContent = 'Morph: Full';
+      } else {
+        manualIslandMode = 'auto';
+        dot.className = 'h-1.5 w-1.5 rounded-full bg-indigo-400';
+        text.textContent = 'Morph: Auto';
+      }
+      applyNavbarMorphState();
+    }
+
+    // Shared-Layout Sliding Pill Logic
+    function initNavSlidingPill() {
+      const container = document.getElementById('nav-pill-container');
+      const pill = document.getElementById('nav-sliding-pill');
+      const items = container.querySelectorAll('[data-nav-item]');
+
+      function movePillTo(el) {
+        const rect = el.getBoundingClientRect();
+        const parentRect = container.getBoundingClientRect();
+        pill.style.width = `${rect.width}px`;
+        pill.style.transform = `translateX(${rect.left - parentRect.left - 4}px)`;
+      }
+
+      items.forEach((item) => {
+        item.addEventListener('mouseenter', () => movePillTo(item));
+        item.addEventListener('click', () => {
+          items.forEach(i => i.classList.replace('text-white', 'text-slate-400'));
+          item.classList.replace('text-slate-400', 'text-white');
+          movePillTo(item);
+        });
+      });
+
+      if (items[0]) setTimeout(() => movePillTo(items[0]), 100);
+    }
+
+    /* ==========================================================================
+       5. HERO LINE REVEAL, CIPHER DECODE, VARIABLE FONT SCRUBBER & MAGNETIC CTA
+       ========================================================================== */
+    function replayHeroReveal() {
+      const lines = document.querySelectorAll('#hero-headline .line-inner');
+      lines.forEach(line => line.classList.remove('revealed'));
+      setTimeout(() => {
+        lines.forEach(line => line.classList.add('revealed'));
+      }, 90);
+    }
+
+    const CIPHER_GLYPHS = '01アイウエオカキクケコ!<>-_\\/[]{}—=+*^?#';
+    function triggerCipherDecode(el, targetText) {
+      const textSpan = el.querySelector('#cipher-badge-text') || el;
+      if (el.dataset.decoding === 'true') return;
+      el.dataset.decoding = 'true';
+
+      let iteration = 0;
+      const interval = setInterval(() => {
+        textSpan.textContent = targetText
+          .split('')
+          .map((char, idx) => {
+            if (char === ' ') return ' ';
+            if (idx < iteration) return targetText[idx];
+            return CIPHER_GLYPHS[Math.floor(Math.random() * CIPHER_GLYPHS.length)];
+          })
+          .join('');
+        iteration += 0.55;
+        if (iteration >= targetText.length) {
+          textSpan.textContent = targetText;
+          el.dataset.decoding = 'false';
+          clearInterval(interval);
+        }
+      }, 22);
+    }
+
+    function updateHeroTypography() {
+      const weight = document.getElementById('type-weight-slider').value;
+      const trackingRaw = document.getElementById('type-tracking-slider').value;
+      const leadingRaw = document.getElementById('type-leading-slider').value;
+
+      const trackingEm = (trackingRaw / 1000).toFixed(3);
+      const leading = (leadingRaw / 100).toFixed(2);
+
+      const h1 = document.getElementById('hero-headline');
+      h1.style.fontWeight = weight;
+      h1.style.letterSpacing = `${trackingEm}em`;
+      h1.style.lineHeight = leading;
+
+      document.getElementById('type-weight-val').textContent = weight;
+      document.getElementById('type-tracking-val').textContent = `${trackingEm}em`;
+      document.getElementById('type-leading-val').textContent = leading;
+    }
+
+    function resetTypographyScrubber() {
+      document.getElementById('type-weight-slider').value = 760;
+      document.getElementById('type-tracking-slider').value = -35;
+      document.getElementById('type-leading-slider').value = 107;
+      updateHeroTypography();
+    }
+
+    // Magnetic Button Proximity Pull
+    function initMagneticButtons() {
+      const wraps = document.querySelectorAll('.magnetic-wrap');
+      wraps.forEach((wrap) => {
+        const strength = parseFloat(wrap.dataset.magneticStrength || '0.35');
+        const child = wrap.firstElementChild;
+        child.style.transition = 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)';
+
+        wrap.addEventListener('mousemove', (e) => {
+          const rect = wrap.getBoundingClientRect();
+          const dx = e.clientX - (rect.left + rect.width / 2);
+          const dy = e.clientY - (rect.top + rect.height / 2);
+          child.style.transform = `translate3d(${(dx * strength).toFixed(1)}px, ${(dy * strength).toFixed(1)}px, 0)`;
+        });
+
+        wrap.addEventListener('mouseleave', () => {
+          child.style.transform = 'translate3d(0px, 0px, 0)';
+        });
+      });
+    }
+
+    /* ==========================================================================
+       6. HERO INTERACTIVE VECTOR / ASCII FIELD CANVAS
+       ========================================================================== */
+    let heroCanvasMode = 'ascii'; // 'ascii' | 'vectors'
+    let heroShockwave = { x: -999, y: -999, radius: 0, active: false };
+
+    function toggleHeroCanvasMode() {
+      heroCanvasMode = heroCanvasMode === 'ascii' ? 'vectors' : 'ascii';
+      document.getElementById('canvas-mode-btn').textContent =
+        heroCanvasMode === 'ascii' ? 'Mode: ASCII + Vectors' : 'Mode: Pure Vector Field';
+    }
+
+    /* ==========================================================================
+       7. CARD A: SPECULAR GLASSMORPHISM & ACRYLIC TUNER
+       ========================================================================== */
+    function updateGlassSpecimen() {
+      const blur = document.getElementById('glass-blur').value;
+      const sat = document.getElementById('glass-sat').value;
+      const spec = document.getElementById('glass-spec').value;
+      const grain = document.getElementById('glass-grain').value;
+
+      const specimen = document.getElementById('glass-specimen');
+      const noise = document.getElementById('glass-noise-layer');
+
+      specimen.style.backdropFilter = `blur(${blur}px) saturate(${sat}%)`;
+      specimen.style.webkitBackdropFilter = `blur(${blur}px) saturate(${sat}%)`;
+      specimen.style.boxShadow = `inset 0 1px 0 0 rgba(255, 255, 255, ${(spec / 100).toFixed(2)}), 0 20px 40px rgba(0,0,0,0.45)`;
+      noise.style.opacity = (grain / 100).toFixed(3);
+
+      document.getElementById('glass-blur-val').textContent = `${blur}px`;
+      document.getElementById('glass-sat-val').textContent = `${sat}%`;
+      document.getElementById('glass-spec-val').textContent = `${spec}%`;
+      document.getElementById('glass-grain-val').textContent = `${grain}%`;
+      document.getElementById('glass-live-readout').textContent = `blur(${blur}px) saturate(${sat}%)`;
+    }
+
+    /* ==========================================================================
+       8. CARD B: 3D PERSPECTIVE TILT & GLARE CARD
+       ========================================================================== */
+    function initTiltCard() {
+      const card = document.getElementById('tilt-card');
+      const glare = document.getElementById('tilt-glare');
+      const readout = document.getElementById('tilt-readout');
+
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const nx = (e.clientX - rect.left) / rect.width - 0.5;
+        const ny = (e.clientY - rect.top) / rect.height - 0.5;
+
+        const rotY = nx * 26;
+        const rotX = -ny * 26;
+
+        card.style.transform = `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+        glare.style.opacity = '1';
+        glare.style.background = `radial-gradient(circle at ${(nx + 0.5) * 100}% ${(ny + 0.5) * 100}%, rgba(255,255,255,0.26), transparent 65%)`;
+        readout.textContent = `X: ${rotX.toFixed(1)}° | Y: ${rotY.toFixed(1)}°`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+        glare.style.opacity = '0';
+        readout.textContent = 'X: 0.0° | Y: 0.0°';
+      });
+    }
+
+    /* ==========================================================================
+       9. CARD C: REAL-TIME SPRING PHYSICS ENGINE (F = -kx - cv)
+       ========================================================================== */
+    const springState = {
+      position: 0,
+      velocity: 0,
+      target: 0,
+      stiffness: 220,
+      damping: 16,
+      mass: 1.0,
+      history: new Array(140).fill(0)
+    };
+
+    function updateSpringParams() {
+      springState.stiffness = parseFloat(document.getElementById('spring-k').value);
+      springState.damping = parseFloat(document.getElementById('spring-c').value);
+      springState.mass = parseFloat(document.getElementById('spring-m').value) / 10;
+
+      document.getElementById('spring-k-val').textContent = springState.stiffness;
+      document.getElementById('spring-c-val').textContent = springState.damping;
+      document.getElementById('spring-m-val').textContent = springState.mass.toFixed(1);
+    }
+
+    function setSpringTarget(nodeIndex) {
+      const track = document.getElementById('spring-track');
+      const puck = document.getElementById('spring-puck');
+      const cssPuck = document.getElementById('css-puck');
+      const maxTravel = Math.max(10, track.clientWidth - puck.clientWidth - 16);
+
+      const targetPx = (nodeIndex / 3) * maxTravel;
+      springState.target = targetPx;
+      cssPuck.style.transform = `translate3d(${targetPx.toFixed(1)}px, 0, 0)`;
+
+      const btns = document.querySelectorAll('.spring-target-btn');
+      btns.forEach((btn, idx) => {
+        if (idx === nodeIndex) {
+          btn.className = 'spring-target-btn rounded-lg bg-cyan-500/25 border border-cyan-400/40 px-2.5 py-1 text-xs font-mono text-cyan-300 transition';
+        } else {
+          btn.className = 'spring-target-btn rounded-lg bg-white/5 hover:bg-cyan-500/20 border border-white/10 px-2.5 py-1 text-xs font-mono text-slate-300 transition';
+        }
+      });
+    }
+
+    /* ==========================================================================
+       10. CARD D: SVG GOOEY LIQUID FILTER & STROKE-DASHOFFSET TRACING
+       ========================================================================== */
+    function switchSvgLabTab(tab) {
+      const gooPanel = document.getElementById('svg-panel-goo');
+      const circuitPanel = document.getElementById('svg-panel-circuit');
+      const tabGoo = document.getElementById('svg-tab-goo');
+      const tabCircuit = document.getElementById('svg-tab-circuit');
+
+      if (tab === 'goo') {
+        gooPanel.classList.remove('hidden');
+        circuitPanel.classList.add('hidden');
+        tabGoo.className = 'rounded-lg bg-cyan-500/20 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition';
+        tabCircuit.className = 'rounded-lg bg-transparent border border-transparent px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-white transition';
+      } else {
+        gooPanel.classList.add('hidden');
+        circuitPanel.classList.remove('hidden');
+        tabCircuit.className = 'rounded-lg bg-cyan-500/20 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition';
+        tabGoo.className = 'rounded-lg bg-transparent border border-transparent px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-white transition';
+      }
+    }
+
+    function updateGooViscosity(val) {
+      const blurNode = document.getElementById('goo-blur-node');
+      if (blurNode) blurNode.setAttribute('stdDeviation', val);
+      document.getElementById('goo-viscosity-val').textContent = `${val}px`;
+    }
+
+    function scrubSvgCircuit(percent) {
+      const p = percent / 100;
+      document.getElementById('trace-path-1').style.strokeDashoffset = 520 * (1 - p);
+      document.getElementById('trace-path-2').style.strokeDashoffset = 460 * (1 - p);
+      document.getElementById('trace-path-3').style.strokeDashoffset = 145 * (1 - p);
+      document.getElementById('svg-draw-val').textContent = `${percent}%`;
+    }
+
+    /* ==========================================================================
+       11. SCROLL-SCRUBBED 3D EXPLODED STACK & OPACITY READING
+       ========================================================================== */
+    function updateExplodedStack(percent, fromManualSlider = false) {
+      const p = Math.max(0, Math.min(100, percent)) / 100;
+      const z1 = Math.round(-90 * p);
+      const z2 = 0;
+      const z3 = Math.round(90 * p);
+      const z4 = Math.round(180 * p);
+
+      document.getElementById('iso-layer-1').style.transform = `translateZ(${z1}px)`;
+      document.getElementById('iso-layer-2').style.transform = `translateZ(${z2}px)`;
+      document.getElementById('iso-layer-3').style.transform = `translateZ(${z3}px)`;
+      document.getElementById('iso-layer-4').style.transform = `translateZ(${z4}px)`;
+
+      document.getElementById('layer1-z').textContent = `${z1}px Z`;
+      document.getElementById('layer2-z').textContent = `0px Z`;
+      document.getElementById('layer3-z').textContent = `+${z3}px Z`;
+      document.getElementById('layer4-z').textContent = `+${z4}px Z`;
+      document.getElementById('explode-progress-val').textContent = `${Math.round(percent)}%`;
+
+      if (!fromManualSlider) {
+        document.getElementById('explode-scrub-slider').value = Math.round(percent);
+      }
+    }
+
+    const EDITORIAL_TEXT =
+      'Great interfaces feel effortless because every transition respects momentum, optical hierarchy, and compositor frame budgets—illuminating information precisely as the eye arrives.';
+    let readingWordSpans = [];
+
+    function initOpacityReadingParagraph() {
+      const container = document.getElementById('scrub-reading-paragraph');
+      const words = EDITORIAL_TEXT.split(' ');
+      container.innerHTML = words
+        .map(w => `<span class="inline-block mr-2.5 transition-colors duration-75" style="opacity: 0.16;">${w}</span>`)
+        .join('');
+      readingWordSpans = Array.from(container.querySelectorAll('span'));
+      updateOpacityReading(55);
+    }
+
+    function updateOpacityReading(percent, syncSlider = false) {
+      const progress = Math.max(0, Math.min(100, percent)) / 100;
+      const total = readingWordSpans.length;
+      readingWordSpans.forEach((span, idx) => {
+        const threshold = idx / total;
+        const delta = (progress - threshold) * 5.5;
+        const alpha = Math.max(0.15, Math.min(1, 0.15 + delta * 0.85));
+        span.style.opacity = alpha.toFixed(3);
+        span.style.color = alpha > 0.85 ? '#F8FAFC' : '#94A3B8';
+      });
+      if (syncSlider) {
+        document.getElementById('opacity-reading-slider').value = Math.round(percent);
+      }
+    }
+
+    /* ==========================================================================
+       12. MORPHING PAGINATION CAROUSEL & OPTIMISTIC UI SONNER TOASTS
+       ========================================================================== */
+    const CAROUSEL_SLIDES = [
+      {
+        badge: 'SLIDE 01 // COMPOSITOR THREAD',
+        title: 'Zero-Layout-Shift Transform Pipeline',
+        desc: 'Animating strictly translate3d(), scale(), and opacity bypasses browser CPU layout and paint recalculations for locked 120Hz fluidity.'
+      },
+      {
+        badge: 'SLIDE 02 // SPRING INTERRUPTIBILITY',
+        title: 'Velocity-Preserving Gesture Redirection',
+        desc: 'Real-time Hooke’s law springs preserve pointer and scroll momentum when a user interrupts an animation mid-flight.'
+      },
+      {
+        badge: 'SLIDE 03 // SPECULAR OPTICS',
+        title: '1px Directional Hairline & Fractal Grain',
+        desc: 'Combining mask-composite gradients with a 3% SVG feTurbulence overlay eliminates color banding on dark acrylic surfaces.'
+      },
+      {
+        badge: 'SLIDE 04 // OPTIMISTIC MUTATIONS',
+        title: '0ms Perceived Latency UI Updates',
+        desc: 'Updating local state and playing completion choreography immediately on click masks network round-trips completely.'
+      }
+    ];
+
+    let activeSlideIndex = 0;
+    let slideProgress = 0; // 0 to 100
+    let carouselPaused = false;
+
+    function renderCarouselDots() {
+      const dotsContainer = document.getElementById('carousel-dots');
+      dotsContainer.innerHTML = CAROUSEL_SLIDES.map((_, idx) => {
+        const isActive = idx === activeSlideIndex;
+        return `
+          <button
+            onclick="selectCarouselSlide(${idx})"
+            class="relative h-2.5 rounded-full bg-white/15 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              isActive ? 'w-10' : 'w-2.5 hover:bg-white/30'
+            }"
+            aria-label="Go to slide ${idx + 1}"
+          >
+            <span
+              id="carousel-fill-${idx}"
+              class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 to-indigo-400 rounded-full"
+              style="width: ${isActive ? slideProgress : 0}%;"
+            ></span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function updateCarouselSlideContent() {
+      const slide = CAROUSEL_SLIDES[activeSlideIndex];
+      document.getElementById('carousel-badge').textContent = slide.badge;
+      document.getElementById('carousel-title').textContent = slide.title;
+      document.getElementById('carousel-desc').textContent = slide.desc;
+      renderCarouselDots();
+    }
+
+    function selectCarouselSlide(idx) {
+      activeSlideIndex = idx;
+      slideProgress = 0;
+      updateCarouselSlideContent();
+    }
+
+    function stepCarousel(dir) {
+      activeSlideIndex = (activeSlideIndex + dir + CAROUSEL_SLIDES.length) % CAROUSEL_SLIDES.length;
+      slideProgress = 0;
+      updateCarouselSlideContent();
+    }
+
+    function setCarouselPaused(paused) {
+      carouselPaused = paused;
+      document.getElementById('carousel-pause-indicator').textContent =
+        paused ? 'Paused (Cursor Hover)' : 'Autoplay Active (Hover to pause)';
+    }
+
+    // Inline Button State Morphing + Sonner Stacked Toasts
+    let morphBtnBusy = false;
+    let deployCommits = 142;
+
+    function triggerMorphDeploy() {
+      if (morphBtnBusy) return;
+      morphBtnBusy = true;
+
+      const btn = document.getElementById('morph-submit-btn');
+      const content = document.getElementById('morph-btn-content');
+
+      // State 1 -> State 2: Compact Loading Pill
+      btn.style.width = '148px';
+      content.innerHTML = `
+        <svg class="w-4 h-4 animate-spin text-obsidian" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+          <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>
+        </svg>
+        <span>Compiling...</span>
+      `;
+
+      setTimeout(() => {
+        // State 2 -> State 3: Success Emerald State
+        btn.style.width = '195px';
+        btn.className = 'relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-emerald-400 text-obsidian font-semibold text-sm h-11 px-5 shadow-lg shadow-emerald-500/25 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]';
+        content.innerHTML = `
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Deployed in 0ms</span>
+        `;
+
+        deployCommits++;
+        document.getElementById('deploy-counter').textContent = `Commits: ${deployCommits}`;
+        spawnSonnerToast(
+          `Build #${deployCommits} Deployed`,
+          'Optimistic UI state committed before edge propagation finished.',
+          'success'
+        );
+
+        setTimeout(() => {
+          // Reset back to Idle
+          btn.style.width = '215px';
+          btn.className = 'relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 to-indigo-500 text-obsidian font-semibold text-sm h-11 px-6 shadow-lg shadow-cyan-500/20 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]';
+          content.innerHTML = `
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Deploy Edge Bundle</span>
+          `;
+          morphBtnBusy = false;
+        }, 1600);
+      }, 650);
+    }
+
+    // Sonner-Style Stacked Toasts Engine
+    let activeToasts = [];
+    let toastStackExpanded = false;
+
+    function spawnSonnerToast(title, desc, type = 'info') {
+      const viewport = document.getElementById('toast-viewport');
+      const id = Date.now() + Math.random();
+
+      const el = document.createElement('div');
+      el.className = 'sonner-toast rounded-2xl bg-[#131926]/95 backdrop-blur-xl p-4 specular-border ambient-shadow';
+      el.style.opacity = '0';
+      el.style.transform = 'translate3d(0, 25px, 0) scale(0.95)';
+
+      const badgeColor = type === 'success' ? 'bg-emerald-400' : 'bg-cyan-400';
+
+      el.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2.5">
+            <span class="mt-1.5 h-2 w-2 rounded-full ${badgeColor} shrink-0"></span>
+            <div>
+              <div class="text-xs font-semibold text-white">${title}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5 leading-snug">${desc}</div>
+            </div>
+          </div>
+          <button class="text-slate-500 hover:text-white text-xs font-mono">✕</button>
+        </div>
+      `;
+
+      el.querySelector('button').onclick = () => dismissToast(id);
+      viewport.appendChild(el);
+
+      activeToasts.unshift({ id, el });
+      if (activeToasts.length > 4) {
+        const oldest = activeToasts.pop();
+        if (oldest && oldest.el.parentNode) oldest.el.parentNode.removeChild(oldest.el);
+      }
+
+      requestAnimationFrame(() => layoutSonnerToasts());
+      setTimeout(() => dismissToast(id), 5200);
+    }
+
+    function dismissToast(id) {
+      const idx = activeToasts.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      const [removed] = activeToasts.splice(idx, 1);
+      removed.el.style.opacity = '0';
+      removed.el.style.transform = 'translate3d(0, 20px, 0) scale(0.9)';
+      setTimeout(() => {
+        if (removed.el.parentNode) removed.el.parentNode.removeChild(removed.el);
+      }, 300);
+      layoutSonnerToasts();
+    }
+
+    function clearAllToasts() {
+      activeToasts.forEach(t => {
+        if (t.el.parentNode) t.el.parentNode.removeChild(t.el);
+      });
+      activeToasts = [];
+    }
+
+    function setToastStackExpanded(expanded) {
+      toastStackExpanded = expanded;
+      layoutSonnerToasts();
+    }
+
+    function layoutSonnerToasts() {
+      activeToasts.forEach((item, indexFromNewest) => {
+        item.el.style.zIndex = String(90 - indexFromNewest);
+        item.el.style.opacity = indexFromNewest > 2 ? '0' : String(1 - indexFromNewest * 0.14);
+        if (toastStackExpanded) {
+          const yOffset = indexFromNewest * 76;
+          item.el.style.transform = `translate3d(0, -${yOffset}px, 0) scale(1)`;
+        } else {
+          const yOffset = indexFromNewest * 11;
+          const scale = 1 - indexFromNewest * 0.055;
+          item.el.style.transform = `translate3d(0, -${yOffset}px, 0) scale(${scale.toFixed(3)})`;
+        }
+      });
+    }
+
+    /* ==========================================================================
+       12B. SECTION 06: FLIP PROJECTION, LIQUID REFRACTION, VAUL & WEB AUDIO
+       ========================================================================== */
+    function performFlipAnimation(mutateDomCallback) {
+      const stage = document.getElementById('flip-stage');
+      const items = Array.from(stage.querySelectorAll('.flip-item'));
+
+      // 1. FIRST: Record initial bounding boxes
+      const firstRects = new Map();
+      items.forEach(el => firstRects.set(el, el.getBoundingClientRect()));
+
+      // 2. Apply layout or DOM order mutation
+      mutateDomCallback(stage, items);
+
+      // 3. LAST & INVERT: Measure new positions and invert
+      items.forEach(el => {
+        const first = firstRects.get(el);
+        const last = el.getBoundingClientRect();
+        const dx = first.left - last.left;
+        const dy = first.top - last.top;
+        const sw = first.width / Math.max(1, last.width);
+        const sh = first.height / Math.max(1, last.height);
+
+        el.style.transition = 'none';
+        el.style.transformOrigin = 'top left';
+        el.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) scale(${sw.toFixed(3)}, ${sh.toFixed(3)})`;
+      });
+
+      // 4. PLAY: Force reflow, then animate to identity
+      void stage.offsetHeight;
+      requestAnimationFrame(() => {
+        items.forEach(el => {
+          el.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
+          el.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
+        });
+      });
+    }
+
+    function switchFlipLayout(mode) {
+      const modes = ['grid', 'list', 'hero'];
+      modes.forEach(m => {
+        const btn = document.getElementById(`flip-btn-${m}`);
+        if (m === mode) {
+          btn.className = 'rounded-lg bg-cyan-500/20 border border-cyan-400/30 px-3 py-1.5 text-xs font-mono text-cyan-300 transition';
+        } else {
+          btn.className = 'rounded-lg bg-transparent border border-transparent px-3 py-1.5 text-xs font-mono text-slate-400 hover:text-white transition';
+        }
+      });
+
+      performFlipAnimation((stage, items) => {
+        items.forEach(el => el.classList.remove('col-span-2'));
+        if (mode === 'grid') {
+          stage.className = 'grid grid-cols-2 gap-3 min-h-[240px] rounded-2xl bg-[#07090E] border border-white/10 p-3.5';
+        } else if (mode === 'list') {
+          stage.className = 'grid grid-cols-1 gap-2.5 min-h-[240px] rounded-2xl bg-[#07090E] border border-white/10 p-3.5';
+        } else if (mode === 'hero') {
+          stage.className = 'grid grid-cols-2 gap-3 min-h-[240px] rounded-2xl bg-[#07090E] border border-white/10 p-3.5';
+          if (items[0]) items[0].classList.add('col-span-2');
+        }
+      });
+    }
+
+    function shuffleFlipCards() {
+      performFlipAnimation((stage, items) => {
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        shuffled.forEach(el => stage.appendChild(el));
+      });
+    }
+
+    function promoteFlipCard(clickedEl) {
+      performFlipAnimation((stage, items) => {
+        stage.prepend(clickedEl);
+        items.forEach(el => el.classList.remove('col-span-2'));
+        clickedEl.classList.add('col-span-2');
+      });
+      document.getElementById('flip-btn-hero').click();
+    }
+
+    // Lab 06B: Chromatic Liquid Glass Lens
+    function updateRefractionLens() {
+      const scale = document.getElementById('lens-scale-slider').value;
+      const rgb = document.getElementById('lens-rgb-slider').value;
+
+      const dispNode = document.getElementById('lens-displacement-node');
+      if (dispNode) dispNode.setAttribute('scale', scale);
+
+      const headline = document.getElementById('chromatic-headline');
+      if (headline) {
+        headline.style.textShadow = `-${rgb}px 0px 0px rgba(244,63,94,0.85), ${rgb}px 0px 0px rgba(34,211,238,0.85)`;
+      }
+
+      document.getElementById('lens-scale-val').textContent = scale;
+      document.getElementById('lens-rgb-val').textContent = `${parseFloat(rgb).toFixed(1)}px`;
+      document.getElementById('refraction-readout').textContent = `Scale: ${scale} | RGB: ${rgb}px`;
+    }
+
+    function initRefractionStage() {
+      const stage = document.getElementById('refraction-stage');
+      const puck = document.getElementById('refraction-lens-puck');
+      const turb = document.getElementById('lens-turbulence-node');
+      if (!stage || !puck) return;
+
+      stage.addEventListener('mousemove', (e) => {
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - (rect.left + rect.width / 2);
+        const y = e.clientY - (rect.top + rect.height / 2);
+        puck.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+
+        if (turb) {
+          const fx = (0.018 + (Math.abs(x) / rect.width) * 0.03).toFixed(4);
+          const fy = (0.018 + (Math.abs(y) / rect.height) * 0.03).toFixed(4);
+          turb.setAttribute('baseFrequency', `${fx} ${fy}`);
+        }
+      });
+    }
+
+    // Lab 06C: Vaul Bottom Sheet & Logarithmic Rubber-Banding
+    let vaulOpen = false;
+    function toggleVaulDrawer(open) {
+      vaulOpen = open;
+      const bg = document.getElementById('vaul-bg-app');
+      const sheet = document.getElementById('vaul-sheet');
+      const badge = document.getElementById('vaul-scale-badge');
+
+      if (vaulOpen) {
+        bg.style.transform = 'scale(0.92) translate3d(0, -6px, 0)';
+        bg.style.borderRadius = '20px';
+        bg.style.opacity = '0.65';
+        sheet.style.transform = 'translate3d(0, 0%, 0)';
+        badge.textContent = 'scale(0.92) | radius: 20px';
+      } else {
+        bg.style.transform = 'scale(1) translate3d(0, 0px, 0)';
+        bg.style.borderRadius = '12px';
+        bg.style.opacity = '1';
+        sheet.style.transform = 'translate3d(0, 105%, 0)';
+        badge.textContent = 'scale(1.00) | radius: 12px';
+      }
+    }
+
+    function testRubberBandPull(rawInput) {
+      const x = parseFloat(rawInput);
+      const d = 176; // Sheet height
+      const c = 0.55; // Apple logarithmic resistance constant
+      const damped = (1 - 1 / ((x * c) / d + 1)) * d * 0.45;
+
+      const sheet = document.getElementById('vaul-sheet');
+      sheet.style.transition = 'none';
+      sheet.style.transform = `translate3d(0, -${damped.toFixed(1)}px, 0)`;
+      document.getElementById('rubber-readout').textContent = `${Math.round(x)}px → ${damped.toFixed(1)}px`;
+    }
+
+    function releaseRubberBandPull() {
+      const slider = document.getElementById('rubber-pull-slider');
+      slider.value = 0;
+      const sheet = document.getElementById('vaul-sheet');
+      sheet.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
+      sheet.style.transform = 'translate3d(0, 0%, 0)';
+      document.getElementById('rubber-readout').textContent = '0px → 0.0px (Snapped)';
+    }
+
+    // Lab 06D: Procedural Web Audio API UI Synthesizer
+    let audioCtx = null;
+    let globalAudioEnabled = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playProceduralSound(type) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      if (type === 'tick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1850, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.016);
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.016);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.018);
+      } else if (type === 'pop') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.065);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.075);
+      } else if (type === 'chime') {
+        [587.33, 880].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.045);
+          gain.gain.setValueAtTime(0.14, now + idx * 0.045);
+          gain.gain.exponentialRampToValueAtTime(0.0008, now + idx * 0.045 + 0.38);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.045);
+          osc.stop(now + idx * 0.045 + 0.4);
+        });
+      } else if (type === 'confirm') {
+        [261.63, 329.63, 392.0, 523.25].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.035);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.035);
+          gain.gain.exponentialRampToValueAtTime(0.0008, now + idx * 0.035 + 0.45);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.035);
+          osc.stop(now + idx * 0.035 + 0.48);
+        });
+      }
+    }
+
+    function toggleGlobalAcousticFeedback() {
+      globalAudioEnabled = !globalAudioEnabled;
+      const btn = document.getElementById('global-sound-toggle');
+      if (globalAudioEnabled) {
+        playProceduralSound('chime');
+        btn.textContent = 'Audio: Active 🔊';
+        btn.className = 'rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-xs font-mono text-emerald-300 transition';
+      } else {
+        btn.textContent = 'Audio: Muted';
+        btn.className = 'rounded-full bg-white/10 border border-white/15 px-3 py-1 text-xs font-mono text-slate-300 transition';
+      }
+    }
+
+    function copyFullHtmlForGoogleSites() {
+      const fullMarkup = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const tempArea = document.createElement('textarea');
+      tempArea.value = fullMarkup;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempArea);
+
+      playProceduralSound('confirm');
+      spawnSonnerToast(
+        'Full Single-File HTML Copied!',
+        'Paste directly into Google Sites → Embed → Embed Code, or deploy free on Firebase/GitHub Pages.',
+        'success'
+      );
+    }
+
+    /* ==========================================================================
+       13. MASTER 120Hz REQUESTANIMATIONFRAME LOOP & TELEMETRY
+       ========================================================================== */
+    let lastFrameTime = performance.now();
+    let fpsAccumulator = 120;
+    let lastScrollY = window.scrollY;
+    let rawScrollVelocity = 0;
+    let smoothScrollVelocity = 0;
+    let marqueeOffset = 0;
+    let marqueeSkew = 0;
+
+    function impulseMarqueeVelocity(boost) {
+      rawScrollVelocity += boost * 90;
+    }
+
+    function damp(current, target, lambda, dt) {
+      return current + (target - current) * (1 - Math.exp(-lambda * dt));
+    }
+
+    window.onload = function () {
+      // 1. Trigger Hero Masked Staggered Line Reveal
+      setTimeout(() => replayHeroReveal(), 120);
+
+      // 2. Initialize Subsystems
+      initNavSlidingPill();
+      initMagneticButtons();
+      initTiltCard();
+      initOpacityReadingParagraph();
+      renderCarouselDots();
+      setSpringTarget(0);
+      initRefractionStage();
+
+      // Optional Global Acoustic Hover Ticks
+      document.querySelectorAll('button, a').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          if (globalAudioEnabled) playProceduralSound('tick');
+        });
+      });
+
+      // 3. Bento Grid Cursor-Tracked Radial Border Spotlight
+      const bentoGrid = document.getElementById('bento-grid');
+      const bentoCards = document.querySelectorAll('.bento-card');
+      bentoGrid.addEventListener('mousemove', (e) => {
+        bentoCards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+          card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        });
+      });
+
+      // 4. Global Pointer Coordinates for HUD
+      window.addEventListener('mousemove', (e) => {
+        document.getElementById('hud-xy').textContent = `${e.clientX}, ${e.clientY}`;
+      }, { passive: true });
+
+      // 5. Scroll Listener for Dynamic Island, Exploded Stack & Opacity Reading
+      window.addEventListener('scroll', () => {
+        applyNavbarMorphState();
+
+        // Scroll-linked 3D Exploded Stack
+        const scrollSec = document.getElementById('scroll-section');
+        if (scrollSec) {
+          const rect = scrollSec.getBoundingClientRect();
+          const viewH = window.innerHeight;
+          const progress = Math.max(0, Math.min(1, (viewH - rect.top) / (viewH + rect.height * 0.45)));
+          updateExplodedStack(progress * 100, false);
+        }
+
+        // Scroll-linked Opacity Reading
+        const para = document.getElementById('scrub-reading-paragraph');
+        if (para) {
+          const rect = para.getBoundingClientRect();
+          const viewH = window.innerHeight;
+          const readProg = Math.max(0, Math.min(1, (viewH * 0.85 - rect.top) / (viewH * 0.6)));
+          updateOpacityReading(readProg * 100, true);
+        }
+      }, { passive: true });
+
+      // 6. Gooey Stage Pointer Tracking
+      const gooStage = document.getElementById('goo-stage');
+      const gooCursorBlob = document.getElementById('goo-cursor-blob');
+      gooStage.addEventListener('mousemove', (e) => {
+        const rect = gooStage.getBoundingClientRect();
+        const x = e.clientX - (rect.left + rect.width / 2);
+        const y = e.clientY - (rect.top + rect.height / 2);
+        gooCursorBlob.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      });
+
+      // 7. Hero Vector Canvas Setup
+      const heroCanvas = document.getElementById('hero-vector-canvas');
+      const hCtx = heroCanvas.getContext('2d');
+      let heroPointer = { x: -500, y: -500, tx: -500, ty: -500 };
+
+      function resizeHeroCanvas() {
+        const rect = heroCanvas.parentElement.getBoundingClientRect();
+        heroCanvas.width = rect.width * window.devicePixelRatio;
+        heroCanvas.height = rect.height * window.devicePixelRatio;
+        hCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      }
+      resizeHeroCanvas();
+
+      heroCanvas.addEventListener('mousemove', (e) => {
+        const rect = heroCanvas.getBoundingClientRect();
+        heroPointer.tx = e.clientX - rect.left;
+        heroPointer.ty = e.clientY - rect.top;
+      });
+      heroCanvas.addEventListener('mouseleave', () => {
+        heroPointer.tx = -500;
+        heroPointer.ty = -500;
+      });
+      heroCanvas.addEventListener('click', (e) => {
+        const rect = heroCanvas.getBoundingClientRect();
+        heroShockwave = { x: e.clientX - rect.left, y: e.clientY - rect.top, radius: 5, active: true };
+      });
+
+      // 8. Spring Graph Canvas Setup
+      const springCanvas = document.getElementById('spring-graph-canvas');
+      const sCtx = springCanvas.getContext('2d');
+      function resizeSpringCanvas() {
+        const rect = springCanvas.parentElement.getBoundingClientRect();
+        springCanvas.width = rect.width * window.devicePixelRatio;
+        springCanvas.height = rect.height * window.devicePixelRatio;
+        sCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      }
+      resizeSpringCanvas();
+      window.addEventListener('resize', () => {
+        resizeHeroCanvas();
+        resizeSpringCanvas();
+      });
+
+      // 9. Start Master 120Hz Loop
+      function animateLoop(now) {
+        const dt = Math.min((now - lastFrameTime) / 1000, 0.064);
+        lastFrameTime = now;
+
+        // A. Telemetry HUD Updates
+        const currentFps = 1 / Math.max(dt, 0.001);
+        fpsAccumulator = damp(fpsAccumulator, currentFps, 8, dt);
+        document.getElementById('hud-fps').textContent = Math.round(fpsAccumulator);
+        document.getElementById('hud-delta').textContent = `${(dt * 1000).toFixed(1)}ms`;
+
+        // B. Scroll Velocity & Kinetic Marquee
+        const dy = window.scrollY - lastScrollY;
+        lastScrollY = window.scrollY;
+        const instantVel = dy / Math.max(dt, 0.004);
+        rawScrollVelocity = damp(rawScrollVelocity, instantVel, 14, dt);
+        smoothScrollVelocity = damp(smoothScrollVelocity, rawScrollVelocity, 10, dt);
+        document.getElementById('hud-vel').textContent = `${Math.round(Math.abs(smoothScrollVelocity))}px/s`;
+
+        const marqueeTrack = document.getElementById('kinetic-marquee-track');
+        if (marqueeTrack) {
+          const speedBoost = 1 + Math.min(6, Math.abs(smoothScrollVelocity) * 0.0045);
+          marqueeOffset -= 68 * speedBoost * dt;
+          const halfWidth = marqueeTrack.scrollWidth / 2;
+          if (Math.abs(marqueeOffset) >= halfWidth) marqueeOffset = 0;
+
+          const targetSkew = Math.max(-14, Math.min(14, smoothScrollVelocity * 0.008));
+          marqueeSkew = damp(marqueeSkew, targetSkew, 10, dt);
+          marqueeTrack.style.transform = `translate3d(${marqueeOffset.toFixed(1)}px, 0, 0) skewX(${marqueeSkew.toFixed(2)}deg)`;
+          document.getElementById('marquee-skew-readout').textContent =
+            `skewX: ${marqueeSkew.toFixed(1)}° | speed: ${speedBoost.toFixed(1)}x`;
+        }
+
+        // C. Real-Time Spring Physics Step (Card C)
+        const disp = springState.position - springState.target;
+        const fSpring = -springState.stiffness * disp;
+        const fDamp = -springState.damping * springState.velocity;
+        const accel = (fSpring + fDamp) / springState.mass;
+        springState.velocity += accel * dt;
+        springState.position += springState.velocity * dt;
+
+        const springPuck = document.getElementById('spring-puck');
+        if (springPuck) {
+          springPuck.style.transform = `translate3d(${springState.position.toFixed(2)}px, 0, 0)`;
+          document.getElementById('spring-vel-readout').textContent =
+            `v = ${Math.round(springState.velocity)} px/s`;
+        }
+
+        // Draw Live Spring Oscillation Curve
+        const sw = springCanvas.clientWidth;
+        const sh = springCanvas.clientHeight;
+        const maxTrack = Math.max(100, document.getElementById('spring-track').clientWidth - 70);
+        springState.history.push(springState.position / maxTrack);
+        if (springState.history.length > 140) springState.history.shift();
+
+        sCtx.clearRect(0, 0, sw, sh);
+        // Target reference line
+        const targetY = sh - (springState.target / maxTrack) * (sh - 24) - 12;
+        sCtx.strokeStyle = 'rgba(244, 63, 94, 0.3)';
+        sCtx.setLineDash([4, 4]);
+        sCtx.beginPath();
+        sCtx.moveTo(0, targetY);
+        sCtx.lineTo(sw, targetY);
+        sCtx.stroke();
+        sCtx.setLineDash([]);
+
+        // Spring displacement curve
+        sCtx.strokeStyle = '#22D3EE';
+        sCtx.lineWidth = 2;
+        sCtx.beginPath();
+        springState.history.forEach((normVal, i) => {
+          const gx = (i / (springState.history.length - 1)) * sw;
+          const gy = sh - normVal * (sh - 24) - 12;
+          if (i === 0) sCtx.moveTo(gx, gy);
+          else sCtx.lineTo(gx, gy);
+        });
+        sCtx.stroke();
+
+        // D. Orbiting Gooey Metaballs (Card D)
+        const t = now * 0.0022;
+        const orbit1 = document.getElementById('goo-orbit-1');
+        const orbit2 = document.getElementById('goo-orbit-2');
+        if (orbit1 && orbit2) {
+          orbit1.style.transform = `translate3d(${(Math.cos(t) * 52).toFixed(1)}px, ${(Math.sin(t * 1.3) * 34).toFixed(1)}px, 0)`;
+          orbit2.style.transform = `translate3d(${(Math.sin(-t * 0.9) * 64).toFixed(1)}px, ${(Math.cos(t * 1.1) * 38).toFixed(1)}px, 0)`;
+        }
+
+        // E. Morphing Pagination Carousel Autoplay Fill
+        if (!carouselPaused) {
+          slideProgress += dt * 24; // ~4.1 seconds per slide
+          if (slideProgress >= 100) {
+            slideProgress = 0;
+            activeSlideIndex = (activeSlideIndex + 1) % CAROUSEL_SLIDES.length;
+            updateCarouselSlideContent();
+          } else {
+            const activeFill = document.getElementById(`carousel-fill-${activeSlideIndex}`);
+            if (activeFill) activeFill.style.width = `${slideProgress.toFixed(1)}%`;
+          }
+        }
+
+        // F. Render Hero Interactive Vector / ASCII Field Canvas
+        const cw = heroCanvas.clientWidth;
+        const ch = heroCanvas.clientHeight;
+        heroPointer.x = damp(heroPointer.x, heroPointer.tx, 14, dt);
+        heroPointer.y = damp(heroPointer.y, heroPointer.ty, 14, dt);
+
+        if (heroShockwave.active) {
+          heroShockwave.radius += 340 * dt;
+          if (heroShockwave.radius > Math.max(cw, ch)) heroShockwave.active = false;
+        }
+
+        hCtx.clearRect(0, 0, cw, ch);
+        const spacing = 26;
+        const cols = Math.floor(cw / spacing);
+        const rows = Math.floor(ch / spacing);
+
+        hCtx.font = '10px "JetBrains Mono", monospace';
+        hCtx.textAlign = 'center';
+        hCtx.textBaseline = 'middle';
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const gx = (c + 0.5) * spacing;
+            const gy = (r + 0.5) * spacing;
+
+            const dx = heroPointer.x - gx;
+            const dy = heroPointer.y - gy;
+            const dist = Math.hypot(dx, dy);
+            const maxDist = 145;
+
+            let angle = Math.sin(c * 0.25 + now * 0.0015) + Math.cos(r * 0.25 + now * 0.0012);
+            let influence = 0;
+
+            if (dist < maxDist) {
+              influence = 1 - dist / maxDist;
+              angle = Math.atan2(dy, dx);
+            }
+
+            // Shockwave ring boost
+            if (heroShockwave.active) {
+              const sDist = Math.abs(Math.hypot(gx - heroShockwave.x, gy - heroShockwave.y) - heroShockwave.radius);
+              if (sDist < 36) {
+                influence = Math.max(influence, 1 - sDist / 36);
+              }
+            }
+
+            if (heroCanvasMode === 'ascii' && influence > 0.28) {
+              const glyphs = ['+', '×', '◈', '0', '1', '∆'];
+              const gIdx = Math.floor((c + r + Math.floor(now * 0.01)) % glyphs.length);
+              hCtx.fillStyle = influence > 0.65 ? '#22D3EE' : '#6366F1';
+              hCtx.fillText(glyphs[gIdx], gx, gy);
+            } else {
+              const len = 6 + influence * 7;
+              const ex = gx + Math.cos(angle) * len;
+              const ey = gy + Math.sin(angle) * len;
+
+              hCtx.strokeStyle =
+                influence > 0.45
+                  ? `rgba(34, 211, 238, ${0.35 + influence * 0.65})`
+                  : 'rgba(148, 163, 184, 0.22)';
+              hCtx.lineWidth = 1.3;
+              hCtx.beginPath();
+              hCtx.moveTo(gx, gy);
+              hCtx.lineTo(ex, ey);
+              hCtx.stroke();
+            }
+          }
+        }
+
+        requestAnimationFrame(animateLoop);
+      }
+
+      requestAnimationFrame(animateLoop);
+    };
+  </script>
+</body>
+</html>

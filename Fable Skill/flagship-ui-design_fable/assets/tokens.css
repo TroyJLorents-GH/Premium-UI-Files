@@ -1,0 +1,113 @@
+/* Starter design tokens for flagship UI work.
+   Replace hue (H) and the type pairing per project; keep the structure.
+   Layers: primitives -> semantic roles -> component tokens. */
+
+@layer reset, tokens, base, components, utilities, overrides;
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* Hue + chroma primitives (OKLCH). One accent. */
+    --hue: 250;
+    --accent-chroma: 0.16;
+
+    /* Spacing: 4/8 scale + fluid section padding */
+    --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+    --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem; --space-16: 4rem; --space-24: 6rem;
+    --section-pad: clamp(3rem, 8vw, 8rem);
+
+    /* Radius: nested rule inner = outer - padding */
+    --radius-1: 4px; --radius-2: 8px; --radius-3: 12px; --radius-4: 16px; --radius-5: 24px; --radius-full: 9999px;
+
+    /* Type: fluid scale (tune with Utopia), measure, numerals */
+    --font-sans: "Inter Variable", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+    --text-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+    --text-sm: clamp(0.875rem, 0.85rem + 0.15vw, 0.9375rem);
+    --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --text-lg: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
+    --text-xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+    --text-2xl: clamp(2rem, 1.6rem + 2vw, 3rem);
+    --text-display: clamp(2.5rem, 1.8rem + 4vw, 5rem);
+    --leading-body: 1.55; --leading-display: 1.05;
+    --tracking-display: -0.025em;
+    --measure: 65ch;
+
+    /* Motion */
+    --duration-instant: 50ms; --duration-fast: 150ms; --duration-base: 250ms;
+    --duration-slow: 400ms; --duration-slower: 600ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* Z-index */
+    --z-dropdown: 100; --z-sticky: 200; --z-modal: 300; --z-toast: 400;
+
+    /* Semantic roles: light */
+    --bg: oklch(98.5% 0.004 var(--hue));
+    --bg-elevated: oklch(100% 0 0);
+    --bg-subtle: oklch(96% 0.006 var(--hue));
+    --fg: oklch(18% 0.02 var(--hue));
+    --fg-muted: oklch(45% 0.02 var(--hue));
+    --border: color-mix(in oklab, var(--fg) 12%, transparent);
+    --accent: oklch(58% var(--accent-chroma) var(--hue));
+    --accent-hover: color-mix(in oklab, var(--accent) 90%, black);
+    --accent-fg: oklch(99% 0 0);
+    --success: oklch(62% 0.15 150); --warning: oklch(75% 0.15 80); --danger: oklch(58% 0.2 25);
+    --ring: oklch(58% var(--accent-chroma) var(--hue));
+    --shadow-1: 0 1px 2px oklch(20% 0.02 var(--hue) / 0.06);
+    --shadow-2: 0 1px 2px oklch(20% 0.02 var(--hue) / 0.06), 0 4px 12px oklch(20% 0.02 var(--hue) / 0.08);
+    --shadow-3: 0 2px 4px oklch(20% 0.02 var(--hue) / 0.06), 0 8px 24px oklch(20% 0.02 var(--hue) / 0.10), 0 24px 48px oklch(20% 0.02 var(--hue) / 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: oklch(15% 0.015 var(--hue));            /* never pure black */
+      --bg-elevated: oklch(19% 0.018 var(--hue));    /* lighter = higher */
+      --bg-subtle: oklch(17% 0.016 var(--hue));
+      --fg: oklch(95% 0.01 var(--hue) / 0.92);       /* body at ~92%, display at 100% */
+      --fg-muted: oklch(75% 0.015 var(--hue));
+      --border: color-mix(in oklab, white 10%, transparent);
+      --accent: oklch(72% calc(var(--accent-chroma) * 0.9) var(--hue));  /* slightly desaturated */
+      --accent-hover: color-mix(in oklab, var(--accent) 88%, white);
+      --accent-fg: oklch(15% 0.02 var(--hue));
+      --shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.06);
+      --shadow-2: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.35);
+      --shadow-3: inset 0 1px 0 rgb(255 255 255 / 0.10), 0 12px 32px rgb(0 0 0 / 0.45), 0 32px 64px rgb(0 0 0 / 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: oklch(15% 0.015 var(--hue)); --bg-elevated: oklch(19% 0.018 var(--hue)); --bg-subtle: oklch(17% 0.016 var(--hue));
+    --fg: oklch(95% 0.01 var(--hue) / 0.92); --fg-muted: oklch(75% 0.015 var(--hue));
+    --border: color-mix(in oklab, white 10%, transparent);
+    --accent: oklch(72% calc(var(--accent-chroma) * 0.9) var(--hue));
+    --accent-hover: color-mix(in oklab, var(--accent) 88%, white); --accent-fg: oklch(15% 0.02 var(--hue));
+    --shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.06);
+    --shadow-2: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.35);
+    --shadow-3: inset 0 1px 0 rgb(255 255 255 / 0.10), 0 12px 32px rgb(0 0 0 / 0.45), 0 32px 64px rgb(0 0 0 / 0.35);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root { --duration-base: 120ms; --duration-slow: 150ms; --duration-slower: 150ms; }
+  }
+}
+
+@layer base {
+  html { scrollbar-gutter: stable; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-body);
+    font-synthesis: none; text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 { line-height: var(--leading-display); letter-spacing: var(--tracking-display); text-wrap: balance; }
+  p { text-wrap: pretty; max-width: var(--measure); }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  [data-numeric], time, td.num { font-variant-numeric: tabular-nums slashed-zero; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    /* Transitions are kept but shortened via the tokens above; design the reduced composition explicitly. */
+  }
+}

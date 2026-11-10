@@ -1,0 +1,288 @@
+# selector()
+
+Source: supplied `GSAP Plugins.md`, lines 4696–4972, original heading: Selector.
+
+This file preserves captured reference material. Embedded prompts describe the original demos; follow the current user request when deciding what to build or explain. The examples have not been executed or verified against current releases.
+
+**Adaptation note:** This source includes React 17 UMD, JSX, and ReactDOM.render. Its script list does not explain JSX compilation and its effect lacks cleanup. Treat it as a selector concept demo, not a modern React scaffold.
+
+For shared dependency and lifecycle issues, see [source caveats](source-caveats.md).
+
+## Original source material
+
+
+> Selector prompt
+
+I'm working with a GSAP demo from the GSAP docs: "React scoped selector".
+Docs page: https://gsap.com/docs/v3/GSAP/UtilityMethods/selector()
+CodePen: https://codepen.io/GreenSock/pen/BaWOZpM
+
+Scripts it loads, in order:
+- https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js
+- https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js
+- https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js
+
+HTML:
+```html
+<div id="app"></div>
+```
+
+CSS:
+```css
+/* GSAP brand: fonts, type sizes, colour vars, buttons and form controls.
+   Element selectors only, so a demo's own class-based styles still win. */
+
+/* Fonts */
+@font-face {
+  font-display: swap;
+  font-family: Mori;
+  font-weight: 400;
+  src: url(https://gsap.com/fonts/Mori/PPMori-Regular.woff) format("woff");
+}
+@font-face {
+  font-display: swap;
+  font-family: Mori;
+  font-weight: 600;
+  src: url(https://gsap.com/fonts/Mori/PPMori-SemiBold.woff) format("woff");
+}
+@font-face {
+  font-display: swap;
+  font-family: "Fraktion Mono";
+  font-weight: 400;
+  src: url(https://gsap.com/fonts/Fraktion/PPFraktionMono-Bold.woff) format("woff");
+}
+
+/* Colours */
+:root {
+  --color-shockingly-green: #0ae448;
+  --color-just-black: #0e100f;
+  --color-surface-white: #fffce1;
+  --color-pink: #fec5fb;
+  --color-shockingly-pink: #f100cb;
+  --color-orangey: #ff8709;
+  --color-lilac: #9d95ff;
+  --color-lt-green: #abff84;
+  --color-blue: #00bae2;
+  --color-grey: #191919;
+  --color-surface75: #bbbaa6;
+  --color-surface50: #7c7c6f;
+  --color-surface25: #42433d;
+
+  --gradient-macha: linear-gradient(114.41deg, var(--color-shockingly-green) 20.74%, var(--color-lt-green) 65.5%);
+  --gradient-orange-crush: linear-gradient(111.45deg, var(--color-orangey) 19.42%, #f7bdf8 73.08%);
+  --gradient-lipstick: linear-gradient(165.72deg, #f7bdf8 21.15%, #cd237f 81.93%);
+  --gradient-purple-haze: linear-gradient(153.58deg, #f7bdf8 32.25%, #2f3cc0 92.68%);
+  --gradient-skyfall: linear-gradient(131.77deg, #0a157a 30.82%, #15bfe4 81.82%);
+  --gradient-emerald-city: linear-gradient(166.9deg, var(--color-shockingly-green) 53.19%, #0085d0 107.69%);
+  --gradient-summer-fair: linear-gradient(144.02deg, var(--color-blue) 4.56%, var(--color-pink) 72.98%);
+  --color-ui-gradient: radial-gradient(
+    78.77% 78.77% at 71.71% 30.77%,
+    #f0fcff 0%,
+    #9bedff 67.21%,
+    #98ecff 76.04%,
+    #5be1ff 84.9%,
+    #00bae2 94.79%
+  );
+  /* Short names many demos use */
+  --dark: var(--color-just-black);
+  --light: var(--color-surface-white);
+  --mid: var(--color-surface50);
+  --grey: var(--color-grey);
+  --gray: var(--color-grey);
+  --green: var(--color-shockingly-green);
+  --green-light: var(--color-lt-green);
+  --blue: var(--color-blue);
+  --purple: var(--color-lilac);
+  --pink: var(--color-pink);
+  --orange: var(--color-orangey);
+  --red: #cd237f;
+
+  /* Form controls */
+  --field-bg: #1c1d1f;
+  --field-border: var(--color-surface25);
+  --field-radius: 8px;
+  --focus-ring: 0 0 0 3px rgba(10, 228, 72, 0.35);
+
+  accent-color: var(--color-shockingly-green);
+  color-scheme: dark;
+}
+
+/* Type */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--color-just-black);
+  color: var(--color-surface75);
+  font-family: Mori, system-ui, sans-serif;
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  margin: 0.5em 0;
+  color: var(--color-surface-white);
+  font-weight: 400;
+  line-height: 1.2;
+}
+h1 { font-size: clamp(2rem, 1.6rem + 2vw, 2.875rem); }
+h2 { font-size: clamp(1.625rem, 1.4rem + 1.2vw, 2.2rem); }
+h3 { font-size: clamp(1.375rem, 1.25rem + 0.6vw, 1.75rem); }
+h4 { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.4rem); }
+
+a { color: inherit; text-underline-offset: 0.15em; }
+
+code, pre, kbd { font-family: "Fraktion Mono", ui-monospace, Menlo, monospace; }
+
+/* Buttons */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 2.5rem;
+  padding: 0 1.25rem;
+  border: 2px solid var(--color-surface75);
+  border-radius: 99px;
+  background: var(--color-just-black);
+  color: var(--color-surface75);
+  font: 600 0.9rem/1 Mori, system-ui, sans-serif;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+  border-color: var(--color-surface-white);
+  color: var(--color-surface-white);
+}
+button:disabled,
+input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Form controls */
+label { color: var(--color-surface75); font-size: 0.9rem; }
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="search"],
+input[type="url"],
+input:not([type]),
+select,
+textarea {
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background: var(--field-bg);
+  color: var(--color-surface-white);
+  font: 400 0.9rem/1.2 Mori, system-ui, sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea { padding: 0.6rem 0.75rem; line-height: 1.45; }
+input::placeholder,
+textarea::placeholder { color: var(--color-surface50); }
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0 0.4em 0 0;
+  vertical-align: -0.15em;
+}
+input[type="range"] { width: min(100%, 18rem); }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-shockingly-green);
+  box-shadow: var(--focus-ring);
+}
+
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+h1 {
+  text-align: center;
+  font-weight: 400;
+}
+
+#app {
+  display: flex;
+  justify-content: center;
+}
+
+.box {
+  width: 80px;
+  height: 80px;
+  background: var(--color-ui-gradient);
+  margin: 10px;
+  float: left;
+  opacity: 0;
+  border-radius: 10px;
+  transform: scale(0.3);
+}
+```
+
+JS:
+```js
+let { useRef, useEffect } = React;
+
+let data = [
+  { id: 0 },
+  { id: 1 },
+  { id: 2 },
+  { id: 3 },
+  { id: 4 }
+];
+
+let Box = () => {
+  return <div className="box"></div>
+};
+
+let App = () => {
+  let el = useRef();
+  let q = gsap.utils.selector(el);
+  
+  useEffect(() => {
+    
+    // The component has been rendered, so we can now select
+    // descendants of the component, including descendants
+    // nested inside of other components    
+    gsap.to(q(".box"), {
+      opacity: 1,
+      scale: 1,
+      duration: 1,
+      stagger: 0.1,
+      repeat: -1,
+      repeatDelay: 1,
+      yoyo: true
+    });
+  }, []);
+  
+  return (
+    <div ref={el}>
+      {data.map((item) => <Box key={item.id} />)}
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.querySelector('#app'));
+```
+
+Explain how this demo works, then help me adapt it for my own project.
+
+
