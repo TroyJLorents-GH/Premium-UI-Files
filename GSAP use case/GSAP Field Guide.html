@@ -1,0 +1,793 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GSAP Field Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky left index + single reading column; tables and code scroll in their own boxes */
+:root{
+  --bg:#f6f7f2; --surface:#ffffff; --fg:#1b1f17; --muted:#5d6656; --line:#dfe3d6;
+  --accent:#0b8a3e; --accent-soft:#e3f4e8; --code-bg:#14180f; --code-fg:#e6edd9; --warn:#b5541b;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11140e; --surface:#181d14; --fg:#e7ecdf; --muted:#9aa58f; --line:#2b3324;
+  --accent:#5fd68a; --accent-soft:#1d2e20; --code-bg:#0a0c08; --code-fg:#dbe5cc; --warn:#f0965c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11140e; --surface:#181d14; --fg:#e7ecdf; --muted:#9aa58f; --line:#2b3324;
+  --accent:#5fd68a; --accent-soft:#1d2e20; --code-bg:#0a0c08; --code-fg:#dbe5cc; --warn:#f0965c; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.65 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;max-width:1180px;margin:0 auto;padding-block:32px}
+nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;font-size:13px}
+nav h4{font:600 11px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 4px}
+nav a{display:block;color:var(--fg);text-decoration:none;padding:2px 0}
+nav a:hover,nav a:focus-visible{color:var(--accent)}
+main{min-width:0}
+h1{font:700 clamp(32px,5vw,52px)/1.05 var(--display);margin:0 0 8px;text-wrap:balance}
+h2{font:700 26px/1.2 var(--display);margin:56px 0 8px;padding-top:12px;border-top:1px solid var(--line);text-wrap:balance}
+h3{font:600 18px/1.3 var(--display);margin:28px 0 6px}
+p,li{max-width:72ch}
+.lede{color:var(--muted);font-size:17px;max-width:65ch}
+code{font:13px var(--mono);background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+pre{background:var(--code-bg);color:var(--code-fg);padding:14px 16px;border-radius:8px;overflow-x:auto;font:13px/1.55 var(--mono)}
+pre code{background:none;padding:0;color:inherit}
+.tbl{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td:first-child{white-space:nowrap;font-family:var(--mono);font-size:13px;color:var(--accent)}
+.when{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.when div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+.when b{font-family:var(--display)}
+.no b{color:var(--warn)}
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin:12px 0}
+.stage{position:relative;height:70px;overflow:hidden}
+.box{width:44px;height:44px;border-radius:6px;background:var(--accent);position:absolute;top:13px;left:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{font:600 13px var(--body);background:var(--fg);color:var(--bg);border:0;border-radius:6px;padding:7px 12px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dots{display:flex;gap:6px}.dot{width:22px;height:22px;border-radius:50%;background:var(--accent)}
+.note{border-left:3px solid var(--accent);padding:4px 12px;color:var(--muted)}
+@media (max-width:820px){.wrap{grid-template-columns:1fr}nav{position:static;max-height:none}}
+</style>
+
+<div class="wrap">
+<nav aria-label="Sections">
+  <h4>Core</h4>
+  <a href="#overview">Overview & when to use</a>
+  <a href="#terms">Terms to know</a>
+  <a href="#gsap">gsap.* methods</a>
+  <a href="#tween">Tween</a>
+  <a href="#timeline">Timeline</a>
+  <a href="#css">CSS</a>
+  <a href="#eases">Eases</a>
+  <h4>Plugins</h4>
+  <a href="#scrolltrigger">ScrollTrigger</a>
+  <a href="#scrollsmoother">ScrollSmoother</a>
+  <a href="#splittext">SplitText</a>
+  <a href="#flip">Flip</a>
+  <a href="#draggable">Draggable & Inertia</a>
+  <a href="#svg">DrawSVG / MorphSVG</a>
+  <a href="#motionpath">MotionPath (+Helper)</a>
+  <a href="#observer">Observer</a>
+  <a href="#physics">Physics2D / PhysicsProps</a>
+  <a href="#text">Text / ScrambleText</a>
+  <a href="#scrollto">ScrollTo</a>
+  <a href="#others">Easel / Pixi / GSDevTools</a>
+  <h4>Features</h4>
+  <a href="#utils">Utility methods</a>
+  <a href="#staggers">Staggers</a>
+  <a href="#sequencing">Sequencing</a>
+  <a href="#control">Control & callbacks</a>
+  <a href="#react">React / cleanup</a>
+</nav>
+
+<main>
+<h1>GSAP Field Guide</h1>
+<p class="lede">A working reference for GSAP 3: the core API, every plugin, the helper tools, and the judgment calls about when GSAP is the right tool. Written against GSAP 3.13, where every plugin, including the former Club plugins, is free and ships in the <code>gsap</code> npm package.</p>
+
+<!-- ============ OVERVIEW ============ -->
+<h2 id="overview">Overview & when to use it</h2>
+<pre><code>npm i gsap
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
+gsap.registerPlugin(ScrollTrigger, SplitText); // register once, before use</code></pre>
+
+<div class="when">
+  <div><b>Use GSAP when</b><ul>
+    <li>You need sequenced, multi-step choreography (timelines).</li>
+    <li>Animation is tied to scroll position, pinning, or scrubbing.</li>
+    <li>You animate SVG, canvas, WebGL/three.js values, or plain JS objects.</li>
+    <li>You need runtime control: pause, reverse, seek, timeScale.</li>
+    <li>Text splitting, layout (FLIP) transitions, drag/throw, morphing.</li>
+    <li>Cross-browser consistency matters (transforms on SVG, etc.).</li>
+  </ul></div>
+  <div class="no"><b>Skip GSAP when</b><ul>
+    <li>A simple hover/focus state change: a CSS <code>transition</code> is enough.</li>
+    <li>A looping spinner or ambient effect: CSS <code>@keyframes</code> runs off the main thread.</li>
+    <li>Basic scroll-reveal with no scrubbing: <code>IntersectionObserver</code> + CSS class, or CSS scroll-driven animations.</li>
+    <li>React state-driven enter/exit with layout: Motion (Framer Motion) may be more idiomatic.</li>
+    <li>Page transitions between routes: the View Transitions API covers the basics.</li>
+    <li>Bundle budget is very tight and you need one tween (core is ~25 KB gzip).</li>
+  </ul></div>
+</div>
+
+<h3>Live demo</h3>
+<div class="demo">
+  <div class="stage"><div class="box" id="demoBox"></div></div>
+  <div class="dots" id="demoDots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="row">
+    <button id="bPlay">Play timeline</button><button id="bPause">Pause</button><button id="bRev">Reverse</button><button id="bSlow">timeScale 0.25</button><button id="bStag">Stagger dots</button>
+  </div>
+</div>
+
+<!-- ============ TERMS ============ -->
+<h2 id="terms">Terms to know</h2>
+<div class="tbl"><table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Tween</td><td>A single animation that changes properties of one or more targets over time. Created by <code>gsap.to/from/fromTo</code>.</td></tr>
+<tr><td>Timeline</td><td>A container of tweens/timelines with its own playhead. Used for sequencing and grouping control.</td></tr>
+<tr><td>Target</td><td>What gets animated: selector string, element, array, NodeList, or any JS object.</td></tr>
+<tr><td>vars</td><td>The config object passed to a tween (properties + special props like <code>duration</code>, <code>ease</code>, callbacks).</td></tr>
+<tr><td>Special properties</td><td>Keys in vars that configure the tween rather than being animated (duration, delay, repeat, yoyo, stagger, onComplete…).</td></tr>
+<tr><td>Position parameter</td><td>Third arg of timeline methods controlling <em>where</em> the child goes: <code>"&lt;"</code>, <code>"+=0.5"</code>, <code>"label"</code>, absolute seconds.</td></tr>
+<tr><td>Playhead</td><td>The current time position of an animation.</td></tr>
+<tr><td>progress / totalProgress</td><td>0–1 position, excluding / including repeats.</td></tr>
+<tr><td>time / totalTime</td><td>Seconds into the animation, excluding / including repeats and repeatDelay.</td></tr>
+<tr><td>timeScale</td><td>Playback speed multiplier (2 = double speed, 0.5 = half).</td></tr>
+<tr><td>Ease</td><td>Rate-of-change curve, e.g. <code>"power2.out"</code>. Types: <code>.in</code>, <code>.out</code>, <code>.inOut</code>.</td></tr>
+<tr><td>Stagger</td><td>Offsetting each target's start time in a multi-target tween.</td></tr>
+<tr><td>Ticker</td><td>GSAP's single requestAnimationFrame loop that drives everything.</td></tr>
+<tr><td>globalTimeline</td><td>Root timeline every animation lives on by default.</td></tr>
+<tr><td>Immediate render</td><td><code>from()</code>/<code>fromTo()</code> render their start values instantly (<code>immediateRender:true</code>) to avoid a flash.</td></tr>
+<tr><td>Overwrite</td><td>How a new tween handles conflicting tweens on the same props (<code>false</code>, <code>true</code>, <code>"auto"</code>).</td></tr>
+<tr><td>Lazy rendering</td><td>GSAP batches first renders to the end of the tick to avoid layout thrashing.</td></tr>
+<tr><td>Context</td><td><code>gsap.context()</code>: collects animations created inside so they can be reverted together (key for React/SPA cleanup).</td></tr>
+<tr><td>matchMedia</td><td><code>gsap.matchMedia()</code>: a context that only runs while a media query matches and auto-reverts when it stops.</td></tr>
+<tr><td>Scrub</td><td>Linking an animation's progress directly to scroll position.</td></tr>
+<tr><td>Pin</td><td>Holding an element fixed while the user scrolls through a section.</td></tr>
+<tr><td>Trigger / scroller</td><td>Element whose position starts/ends a ScrollTrigger / the scrolling container (default viewport).</td></tr>
+<tr><td>FLIP</td><td>First, Last, Invert, Play: record state, change layout, animate from old to new.</td></tr>
+<tr><td>Quick setter / quickTo</td><td>Optimised functions for setting/animating one property many times per second (e.g. mouse follow).</td></tr>
+<tr><td>Modifiers</td><td>Functions that intercept each property value on every tick (wrapping, snapping).</td></tr>
+<tr><td>Keyframes</td><td>An array or object of steps inside a single tween.</td></tr>
+</table></div>
+
+<!-- ============ GSAP ============ -->
+<h2 id="gsap">gsap.* methods</h2>
+<div class="tbl"><table>
+<tr><th>Method</th><th>What it does</th></tr>
+<tr><td>gsap.to(targets, vars)</td><td>Animate from current values to the values in vars.</td></tr>
+<tr><td>gsap.from(targets, vars)</td><td>Animate from vars to current values.</td></tr>
+<tr><td>gsap.fromTo(t, from, to)</td><td>Define both ends explicitly. Most predictable.</td></tr>
+<tr><td>gsap.set(targets, vars)</td><td>Zero-duration tween; set values immediately.</td></tr>
+<tr><td>gsap.timeline(vars)</td><td>Create a Timeline.</td></tr>
+<tr><td>gsap.registerPlugin(...)</td><td>Register plugins (prevents tree-shaking from dropping them).</td></tr>
+<tr><td>gsap.registerEase(name, fn)</td><td>Register a custom ease by name.</td></tr>
+<tr><td>gsap.registerEffect({...})</td><td>Package a reusable animation as <code>gsap.effects.name()</code>.</td></tr>
+<tr><td>gsap.config({...})</td><td>Global settings: <code>autoSleep</code>, <code>force3D</code>, <code>nullTargetWarn</code>, <code>units</code>.</td></tr>
+<tr><td>gsap.defaults({...})</td><td>Default vars for all tweens, e.g. <code>{ease:"power2.out", duration:0.6}</code>.</td></tr>
+<tr><td>gsap.context(fn, scope)</td><td>Scope selectors and collect animations for <code>ctx.revert()</code>.</td></tr>
+<tr><td>gsap.matchMedia()</td><td>Responsive animations: <code>mm.add("(min-width:800px)", () =&gt; {...})</code>.</td></tr>
+<tr><td>gsap.matchMediaRefresh()</td><td>Re-run all matchMedia conditions (e.g. after a reduced-motion toggle).</td></tr>
+<tr><td>gsap.getProperty(t, prop, unit?)</td><td>Read current value (parsed number unless unit passed).</td></tr>
+<tr><td>gsap.quickSetter(t, prop, unit)</td><td>Fast setter function; no tween.</td></tr>
+<tr><td>gsap.quickTo(t, prop, vars)</td><td>Reusable tween function; call with new end values.</td></tr>
+<tr><td>gsap.getTweensOf(targets)</td><td>Array of active tweens on targets.</td></tr>
+<tr><td>gsap.isTweening(target)</td><td>Boolean.</td></tr>
+<tr><td>gsap.killTweensOf(t, props?)</td><td>Kill tweens of targets (optionally only certain props).</td></tr>
+<tr><td>gsap.getById(id)</td><td>Find an animation by its <code>id</code> var.</td></tr>
+<tr><td>gsap.delayedCall(sec, fn, params)</td><td>Timer on GSAP's ticker (pauses with the global timeline).</td></tr>
+<tr><td>gsap.exportRoot()</td><td>Wrap all current root animations in one timeline (e.g. slow-mo everything).</td></tr>
+<tr><td>gsap.globalTimeline</td><td>Root timeline: <code>gsap.globalTimeline.timeScale(0.5)</code>.</td></tr>
+<tr><td>gsap.ticker</td><td><code>add(fn)</code>, <code>remove(fn)</code>, <code>fps(n)</code>, <code>lagSmoothing(threshold, adjusted)</code>, <code>deltaRatio()</code>, <code>time</code>, <code>frame</code>.</td></tr>
+<tr><td>gsap.updateRoot(time)</td><td>Manually drive the root (used when you own the render loop).</td></tr>
+<tr><td>gsap.parseEase(str)</td><td>Return the easing function for a string.</td></tr>
+<tr><td>gsap.version</td><td>Version string.</td></tr>
+<tr><td>gsap.utils</td><td>Utility methods; see <a href="#utils">Utilities</a>.</td></tr>
+<tr><td>gsap.plugins / gsap.core</td><td>Access registered plugins / core classes (Tween, Timeline, Animation).</td></tr>
+</table></div>
+<pre><code>gsap.defaults({ ease: "power3.out", duration: 0.8 });
+
+gsap.registerEffect({
+  name: "fadeUp",
+  effect: (targets, config) =&gt; gsap.from(targets, { y: 40, autoAlpha: 0, duration: config.duration }),
+  defaults: { duration: 0.6 },
+  extendTimeline: true            // allows tl.fadeUp(".card", {}, "&lt;")
+});
+gsap.effects.fadeUp(".card");
+
+// Mouse follower: quickTo creates one reusable tween per axis
+const xTo = gsap.quickTo(".cursor", "x", { duration: 0.4, ease: "power3" });
+const yTo = gsap.quickTo(".cursor", "y", { duration: 0.4, ease: "power3" });
+window.addEventListener("pointermove", e =&gt; { xTo(e.clientX); yTo(e.clientY); });</code></pre>
+
+<!-- ============ TWEEN ============ -->
+<h2 id="tween">Tween</h2>
+<h3>Special properties (vars)</h3>
+<div class="tbl"><table>
+<tr><th>Property</th><th>Default / notes</th></tr>
+<tr><td>duration</td><td>0.5 seconds.</td></tr>
+<tr><td>delay</td><td>Seconds before start.</td></tr>
+<tr><td>ease</td><td><code>"power1.out"</code>. String or function.</td></tr>
+<tr><td>repeat</td><td>Number of repeats; <code>-1</code> = infinite.</td></tr>
+<tr><td>repeatDelay</td><td>Seconds between repeats.</td></tr>
+<tr><td>repeatRefresh</td><td>Re-record start/end values on each repeat (works with function-based values).</td></tr>
+<tr><td>yoyo</td><td>Alternate direction each repeat.</td></tr>
+<tr><td>yoyoEase</td><td>Different ease on the yoyo leg (or <code>true</code> to flip the ease).</td></tr>
+<tr><td>stagger</td><td>Number or object; see <a href="#staggers">Staggers</a>.</td></tr>
+<tr><td>paused</td><td>Start paused.</td></tr>
+<tr><td>reversed</td><td>Start reversed.</td></tr>
+<tr><td>immediateRender</td><td>Render start values now. True for from/fromTo/set.</td></tr>
+<tr><td>overwrite</td><td><code>false</code> (default), <code>true</code> (kill all tweens of same targets), <code>"auto"</code> (kill only overlapping props).</td></tr>
+<tr><td>lazy</td><td>Defer first render to end of tick (default true for to()).</td></tr>
+<tr><td>id</td><td>Name for <code>gsap.getById()</code> / GSDevTools.</td></tr>
+<tr><td>data</td><td>Arbitrary data stored on the tween.</td></tr>
+<tr><td>keyframes</td><td>Array of vars, percent object, or per-prop arrays.</td></tr>
+<tr><td>modifiers</td><td>Per-property functions applied each tick.</td></tr>
+<tr><td>runBackwards</td><td>Internal basis of from(); flips direction.</td></tr>
+<tr><td>startAt</td><td>Values to set before the tween starts.</td></tr>
+<tr><td>inherit</td><td>Set false to ignore parent timeline defaults.</td></tr>
+<tr><td>callbackScope</td><td>The <code>this</code> for callbacks.</td></tr>
+<tr><td>onStart / onUpdate / onComplete / onRepeat / onReverseComplete / onInterrupt</td><td>Callbacks. Each has a matching <code>…Params</code> array.</td></tr>
+</table></div>
+<h3>Methods</h3>
+<div class="tbl"><table>
+<tr><th>Method</th><th>Notes</th></tr>
+<tr><td>play(from?) / pause(at?) / resume()</td><td>Basic control.</td></tr>
+<tr><td>reverse(from?) / reversed(bool?)</td><td>Play backward / get-set direction.</td></tr>
+<tr><td>restart(includeDelay?)</td><td>Back to start and play.</td></tr>
+<tr><td>seek(time) / progress(v) / totalProgress(v)</td><td>Jump the playhead.</td></tr>
+<tr><td>time(v) / totalTime(v)</td><td>Get/set seconds.</td></tr>
+<tr><td>duration(v) / totalDuration(v)</td><td>Get/set lengths.</td></tr>
+<tr><td>delay(v) / repeat(v) / repeatDelay(v) / yoyo(bool)</td><td>Getter/setters.</td></tr>
+<tr><td>timeScale(v)</td><td>Speed.</td></tr>
+<tr><td>startTime(v) / endTime()</td><td>Position on parent timeline.</td></tr>
+<tr><td>isActive()</td><td>Currently playing and inside its active range.</td></tr>
+<tr><td>paused(bool?)</td><td>Get/set paused state.</td></tr>
+<tr><td>kill()</td><td>Stop and release for GC.</td></tr>
+<tr><td>revert()</td><td>Kill and restore targets' original inline styles.</td></tr>
+<tr><td>invalidate()</td><td>Clear recorded start values so they re-read on next render.</td></tr>
+<tr><td>then()</td><td>Promise: <code>await gsap.to(...)</code>.</td></tr>
+<tr><td>eventCallback(type, fn, params)</td><td>Get/set a callback after creation.</td></tr>
+<tr><td>targets()</td><td>Array of targets.</td></tr>
+<tr><td>iteration(n)</td><td>Current repeat iteration.</td></tr>
+<tr><td>globalTime(local)</td><td>Convert local time to global time.</td></tr>
+</table></div>
+<p>Properties: <code>tween.vars</code>, <code>tween.data</code>, <code>tween.parent</code>, <code>tween.ratio</code> (eased progress), <code>tween.scrollTrigger</code>.</p>
+<pre><code>// to / from / fromTo
+gsap.to(".box", { x: 200, rotation: 360, duration: 1, ease: "back.out(1.7)" });
+gsap.from(".hero h1", { y: 60, autoAlpha: 0 });
+gsap.fromTo(".bar", { scaleX: 0 }, { scaleX: 1, transformOrigin: "left center" });
+
+// Function-based values: called per target
+gsap.to(".item", { x: (i, el, all) =&gt; i * 50 });
+
+// Relative values
+gsap.to(".box", { x: "+=100", rotation: "-=45" });
+
+// Keyframes (three syntaxes)
+gsap.to(".box", { keyframes: [{ x: 100 }, { y: 100 }, { x: 0, y: 0 }] });
+gsap.to(".box", { keyframes: { "0%": { x: 0 }, "50%": { x: 200, ease: "sine.out" }, "100%": { x: 0 } }, duration: 2 });
+gsap.to(".box", { keyframes: { x: [0, 100, 0], y: [0, -50, 0], easeEach: "sine.inOut" }, duration: 2 });
+
+// Await
+await gsap.to(".modal", { autoAlpha: 0 });
+modal.remove();
+
+// Animate any JS object (great for canvas / three.js)
+const state = { value: 0 };
+gsap.to(state, { value: 100, onUpdate: () =&gt; label.textContent = state.value.toFixed(0) });
+gsap.to(mesh.rotation, { y: Math.PI * 2, repeat: -1, ease: "none", duration: 6 });</code></pre>
+
+<!-- ============ TIMELINE ============ -->
+<h2 id="timeline">Timeline</h2>
+<p>A Timeline has every Tween method above, plus child management. Timeline-specific vars:</p>
+<div class="tbl"><table>
+<tr><th>Var</th><th>Notes</th></tr>
+<tr><td>defaults</td><td>Vars inherited by every child: <code>{defaults:{duration:0.5, ease:"power2"}}</code>.</td></tr>
+<tr><td>autoRemoveChildren</td><td>Remove children when they finish (root uses this).</td></tr>
+<tr><td>smoothChildTiming</td><td>Keep children in place when you change their timing on the fly.</td></tr>
+<tr><td>repeat / yoyo / repeatDelay / paused / delay</td><td>Same as Tween, applied to the whole sequence.</td></tr>
+<tr><td>scrollTrigger</td><td>Attach a ScrollTrigger to the whole timeline.</td></tr>
+<tr><td>callbacks</td><td>Same set as Tween.</td></tr>
+</table></div>
+<div class="tbl"><table>
+<tr><th>Method</th><th>Notes</th></tr>
+<tr><td>to / from / fromTo / set</td><td>Add a tween; third/fourth arg is the position.</td></tr>
+<tr><td>add(child, position)</td><td>Add a tween, timeline, label, callback, or array.</td></tr>
+<tr><td>addLabel(name, position)</td><td>Named marker.</td></tr>
+<tr><td>removeLabel(name)</td><td>—</td></tr>
+<tr><td>addPause(position, cb?)</td><td>Pause the timeline at that point.</td></tr>
+<tr><td>call(fn, params, position)</td><td>Call a function at a point.</td></tr>
+<tr><td>remove(child)</td><td>—</td></tr>
+<tr><td>clear(labels?)</td><td>Empty the timeline.</td></tr>
+<tr><td>getChildren(nested, tweens, timelines)</td><td>List children.</td></tr>
+<tr><td>getTweensOf(targets)</td><td>Children affecting targets.</td></tr>
+<tr><td>getById(id)</td><td>—</td></tr>
+<tr><td>tweenTo(position, vars)</td><td>Returns a tween that scrubs the playhead to a point.</td></tr>
+<tr><td>tweenFromTo(from, to, vars)</td><td>Same, with a start point. Great for "play this chapter".</td></tr>
+<tr><td>nextLabel() / previousLabel() / currentLabel()</td><td>Label navigation (slideshows).</td></tr>
+<tr><td>recent()</td><td>Most recently added child.</td></tr>
+<tr><td>shiftChildren(amount, adjustLabels, ignoreBefore)</td><td>Offset children in time.</td></tr>
+<tr><td>labels</td><td>Object of label times.</td></tr>
+</table></div>
+<pre><code>const tl = gsap.timeline({ defaults: { duration: 0.6, ease: "power2.out" }, paused: true });
+tl.from(".nav", { y: -40, autoAlpha: 0 })
+  .addLabel("content")
+  .from(".title", { y: 30, autoAlpha: 0 }, "content")
+  .from(".sub",   { y: 30, autoAlpha: 0 }, "&lt;0.15")
+  .from(".cta",   { scale: 0.8, autoAlpha: 0 }, "-=0.2")
+  .call(() =&gt; console.log("done intro"))
+  .addPause("+=0.5");
+tl.play();
+
+// Nest timelines: build sections as functions, compose in a master
+function intro()  { return gsap.timeline().from(".a", { x: -100 }); }
+function middle() { return gsap.timeline().to(".b", { rotation: 90 }); }
+const master = gsap.timeline().add(intro()).add(middle(), "-=0.3");</code></pre>
+
+<!-- ============ CSS ============ -->
+<h2 id="css">CSS (CSSPlugin)</h2>
+<p>CSSPlugin is built into core. Any numeric CSS property in camelCase works. Prefer transforms and opacity; they skip layout and paint.</p>
+<div class="tbl"><table>
+<tr><th>Shortcut</th><th>Meaning</th></tr>
+<tr><td>x, y, z</td><td>translateX/Y/Z (px by default).</td></tr>
+<tr><td>xPercent, yPercent</td><td>Percentage translate (stacks with x/y; use for centering: <code>xPercent:-50</code>).</td></tr>
+<tr><td>rotation / rotate, rotationX, rotationY</td><td>Degrees (or "1.5rad").</td></tr>
+<tr><td>scale, scaleX, scaleY</td><td>—</td></tr>
+<tr><td>skewX, skewY</td><td>—</td></tr>
+<tr><td>transformOrigin</td><td><code>"50% 50%"</code>, <code>"left top"</code>.</td></tr>
+<tr><td>transformPerspective</td><td>Per-element perspective.</td></tr>
+<tr><td>svgOrigin</td><td>Origin in SVG global coordinates.</td></tr>
+<tr><td>smoothOrigin</td><td>Avoid jumps when origin changes on SVG (default true).</td></tr>
+<tr><td>autoAlpha</td><td>opacity + <code>visibility:hidden</code> at 0. Use this for fades.</td></tr>
+<tr><td>force3D</td><td><code>"auto"</code> (default) uses 3D during, 2D after.</td></tr>
+<tr><td>clearProps</td><td>Remove inline props on complete: <code>"all"</code>, <code>"transform"</code>, <code>"x,y"</code>.</td></tr>
+<tr><td>"--var"</td><td>CSS variables: <code>{"--hue": 180}</code>.</td></tr>
+<tr><td>Directional rotation</td><td><code>"270_cw"</code>, <code>"-90_ccw"</code>, <code>"45_short"</code>.</td></tr>
+<tr><td>Complex strings</td><td>boxShadow, filter, clipPath, backgroundPosition, borderRadius animate if formats match.</td></tr>
+<tr><td>Width/height "auto"</td><td>Animating to <code>height:"auto"</code> works.</td></tr>
+</table></div>
+<pre><code>gsap.set(".modal", { xPercent: -50, yPercent: -50, left: "50%", top: "50%", position: "fixed" });
+gsap.to(".card", { "--glow": 1, boxShadow: "0 20px 40px rgba(0,0,0,.3)", clipPath: "inset(0% 0% 0% 0%)" });
+gsap.to(".panel", { height: "auto", duration: 0.4 });
+gsap.to(".el", { x: 100, clearProps: "transform" });</code></pre>
+<p class="note">Avoid animating <code>top/left/width/height/margin</code> in hot paths; they trigger layout. Use <code>x/y/scale</code>, or Flip for layout changes.</p>
+
+<!-- ============ EASES ============ -->
+<h2 id="eases">Eases</h2>
+<h3>Built-in (core)</h3>
+<p><code>none</code> (linear), <code>power1–4</code> (power1 = quad, power2 = cubic, power3 = quart, power4 = quint), <code>back(overshoot)</code>, <code>bounce</code>, <code>circ</code>, <code>elastic(amplitude, period)</code>, <code>expo</code>, <code>sine</code>, <code>steps(n)</code>. Each takes <code>.in</code>, <code>.out</code> (default), <code>.inOut</code>.</p>
+<p>Rules of thumb: UI entrances use <code>.out</code>; exits use <code>.in</code>; things moving across the screen use <code>.inOut</code>; scrubbed scroll animations often use <code>"none"</code>; continuous rotation uses <code>"none"</code>.</p>
+<h3>Ease plugins</h3>
+<div class="tbl"><table>
+<tr><th>Ease</th><th>Use / syntax</th></tr>
+<tr><td>CustomEase</td><td>Any curve from SVG path data (copy from the GSAP ease visualizer). <code>CustomEase.create("hop","M0,0 C0.3,0 0.2,1 1,1")</code>. Methods: <code>create</code>, <code>get</code>, <code>getSVGData</code>.</td></tr>
+<tr><td>CustomBounce</td><td>Tunable bounce plus a matching squash ease. <code>CustomBounce.create("myBounce",{strength:0.6, squash:3, squashID:"myBounce-squash", endAtStart:false})</code>.</td></tr>
+<tr><td>CustomWiggle</td><td>Oscillation that returns to start. <code>CustomWiggle.create("wig",{wiggles:8, type:"easeOut"})</code>. Types: easeOut, easeInOut, anticipate, uniform, random. Also <code>amplitudeEase</code>, <code>timingEase</code>.</td></tr>
+<tr><td>ExpoScaleEase</td><td>Makes scale tweens feel linear when values differ greatly (zooms). <code>ease:"expoScale(0.5, 7, power2.inOut)"</code>.</td></tr>
+<tr><td>RoughEase</td><td>Jittery/shaky. <code>"rough({template:none.out, strength:1, points:20, taper:'none', randomize:true, clamp:false})"</code>.</td></tr>
+<tr><td>SlowMo</td><td>Fast–slow–fast (slow middle). <code>"slow(0.7, 0.7, false)"</code> = (linearRatio, power, yoyoMode).</td></tr>
+<tr><td>SteppedEase</td><td>Now core: <code>"steps(12)"</code>. Sprite sheets, clocks, typewriter.</td></tr>
+</table></div>
+<pre><code>import { CustomEase } from "gsap/CustomEase";
+import { CustomBounce } from "gsap/CustomBounce";   // requires CustomEase
+import { CustomWiggle } from "gsap/CustomWiggle";   // requires CustomEase
+import { ExpoScaleEase, RoughEase, SlowMo } from "gsap/EasePack";
+gsap.registerPlugin(CustomEase, CustomBounce, CustomWiggle, ExpoScaleEase, RoughEase, SlowMo);
+
+CustomBounce.create("ball", { strength: 0.7, squash: 2 });
+gsap.timeline()
+  .to(".ball", { y: 300, ease: "ball", duration: 1.5 })
+  .to(".ball", { scaleX: 1.4, scaleY: 0.6, ease: "ball-squash", transformOrigin: "bottom", duration: 1.5 }, 0);
+
+CustomWiggle.create("shake", { wiggles: 6, type: "easeOut" });
+gsap.to(".input.error", { x: 10, ease: "shake", duration: 0.5 });
+
+gsap.to(".map", { scale: 8, ease: "expoScale(1, 8, power1.inOut)" });
+gsap.to(".sprite", { backgroundPosition: "-1200px 0", ease: "steps(12)", repeat: -1, duration: 1 });</code></pre>
+
+<!-- ============ SCROLLTRIGGER ============ -->
+<h2 id="scrolltrigger">ScrollTrigger</h2>
+<p>Ties animations (or callbacks) to scroll position. Pinning, scrubbing, snapping, toggles, batching.</p>
+<h3>Config properties</h3>
+<div class="tbl"><table>
+<tr><th>Property</th><th>Notes</th></tr>
+<tr><td>trigger</td><td>Element whose position defines start/end.</td></tr>
+<tr><td>start / end</td><td><code>"top 80%"</code> = trigger's top hits 80% down viewport. End may be <code>"+=500"</code>, <code>"bottom top"</code>, a function, or <code>"max"</code>. <code>clamp()</code> wraps prevent starting before page top.</td></tr>
+<tr><td>endTrigger</td><td>Different element for the end.</td></tr>
+<tr><td>scrub</td><td><code>true</code> or seconds of catch-up smoothing (e.g. <code>1</code>).</td></tr>
+<tr><td>pin</td><td><code>true</code> or element to pin.</td></tr>
+<tr><td>pinSpacing</td><td>Add padding so content after waits (default true; <code>"margin"</code> option).</td></tr>
+<tr><td>pinType</td><td><code>"fixed"</code> or <code>"transform"</code>.</td></tr>
+<tr><td>pinReparent / pinSpacer / anticipatePin / pinnedContainer</td><td>Edge cases for pinning (stacking contexts, flicker, nested pins).</td></tr>
+<tr><td>toggleActions</td><td>4 actions for onEnter onLeave onEnterBack onLeaveBack. Default <code>"play none none none"</code>. Values: play, pause, resume, reset, restart, complete, reverse, none.</td></tr>
+<tr><td>toggleClass</td><td>Add class while active: <code>"active"</code> or <code>{targets, className}</code>.</td></tr>
+<tr><td>snap</td><td>Number, array, <code>"labels"</code>, <code>"labelsDirectional"</code>, function, or <code>{snapTo, duration, delay, ease, directional, inertia}</code>.</td></tr>
+<tr><td>markers</td><td>Debug markers. Remove before shipping.</td></tr>
+<tr><td>scroller</td><td>Custom scroll container.</td></tr>
+<tr><td>horizontal</td><td>Horizontal scroller.</td></tr>
+<tr><td>once</td><td>Kill after first onEnter.</td></tr>
+<tr><td>id</td><td>For <code>ScrollTrigger.getById</code>.</td></tr>
+<tr><td>invalidateOnRefresh</td><td>Re-record values on refresh (needed for function-based values that depend on size).</td></tr>
+<tr><td>refreshPriority</td><td>Order of refresh when created out of page order.</td></tr>
+<tr><td>containerAnimation</td><td>Trigger on elements inside a horizontally-scrolling (fake) container tween.</td></tr>
+<tr><td>fastScrollEnd</td><td>Force completion when user scrolls past quickly.</td></tr>
+<tr><td>preventOverlaps</td><td>Complete previous trigger's animation before this one.</td></tr>
+<tr><td>animation</td><td>Animation to control (when using <code>ScrollTrigger.create</code>).</td></tr>
+<tr><td>callbacks</td><td>onEnter, onLeave, onEnterBack, onLeaveBack, onToggle, onUpdate, onRefresh, onRefreshInit, onScrubComplete, onSnapComplete. Each gets the ScrollTrigger instance (<code>self</code>).</td></tr>
+</table></div>
+<h3>Instance properties / methods</h3>
+<p><code>self.progress</code>, <code>self.direction</code> (1/-1), <code>self.isActive</code>, <code>self.start</code>, <code>self.end</code>, <code>self.animation</code>, <code>self.trigger</code>, <code>self.pin</code>, <code>self.getVelocity()</code>, <code>self.scroll(v)</code>, <code>self.disable(revert)</code>, <code>self.enable()</code>, <code>self.kill()</code>, <code>self.refresh()</code>, <code>self.labelToScroll(label)</code>, <code>self.getTween()</code>, <code>self.previous()</code>, <code>self.next()</code>.</p>
+<h3>Static methods</h3>
+<p><code>ScrollTrigger.create()</code>, <code>batch(targets, vars)</code>, <code>refresh()</code>, <code>update()</code>, <code>getAll()</code>, <code>getById()</code>, <code>killAll()</code>, <code>config({limitCallbacks, ignoreMobileResize, autoRefreshEvents})</code>, <code>defaults()</code>, <code>scrollerProxy()</code> (third-party smooth scrollers), <code>normalizeScroll()</code> (mobile address-bar jank), <code>isInViewport(el, ratio)</code>, <code>positionInViewport(el, ref)</code>, <code>maxScroll(scroller)</code>, <code>addEventListener("refresh"|"refreshInit"|"scrollStart"|"scrollEnd"|"matchMedia")</code>, <code>clearScrollMemory()</code>, <code>saveStyles()</code>, <code>sort()</code>, <code>isScrolling()</code>, <code>observe()</code>.</p>
+<pre><code>gsap.registerPlugin(ScrollTrigger);
+
+// Reveal on enter
+gsap.from(".card", {
+  y: 60, autoAlpha: 0, stagger: 0.1,
+  scrollTrigger: { trigger: ".cards", start: "top 80%", toggleActions: "play none none reverse" }
+});
+
+// Pinned, scrubbed story section
+const tl = gsap.timeline({
+  scrollTrigger: { trigger: ".story", start: "top top", end: "+=2000", scrub: 1, pin: true, snap: "labels" }
+});
+tl.addLabel("one").to(".slide1", { autoAlpha: 0 }).addLabel("two").from(".slide2", { yPercent: 100 }).addLabel("three");
+
+// Horizontal scroll section
+const panels = gsap.utils.toArray(".panel");
+const scrollTween = gsap.to(panels, {
+  xPercent: -100 * (panels.length - 1), ease: "none",
+  scrollTrigger: { trigger: ".h-wrap", pin: true, scrub: 1, end: () =&gt; "+=" + document.querySelector(".h-wrap").offsetWidth }
+});
+// Trigger inside the horizontal section
+gsap.to(".panel-3 h2", { rotation: 20, scrollTrigger: { trigger: ".panel-3", containerAnimation: scrollTween, start: "left center" } });
+
+// Batch many elements efficiently
+ScrollTrigger.batch(".grid-item", { onEnter: els =&gt; gsap.from(els, { autoAlpha: 0, y: 30, stagger: 0.05 }) });
+
+// Progress bar
+gsap.to(".progress", { scaleX: 1, ease: "none", scrollTrigger: { scrub: 0.3 } });</code></pre>
+<p class="note">Create ScrollTriggers in page order (top to bottom), or set <code>refreshPriority</code>. Call <code>ScrollTrigger.refresh()</code> after images/fonts change layout. Never put a ScrollTrigger on a child tween inside a timeline; put it on the timeline.</p>
+
+<!-- ============ SCROLLSMOOTHER ============ -->
+<h2 id="scrollsmoother">ScrollSmoother</h2>
+<p>Smooth scrolling built on native scroll (keeps accessibility, find-in-page) and integrated with ScrollTrigger. Requires ScrollTrigger and this markup:</p>
+<pre><code>&lt;div id="smooth-wrapper"&gt;&lt;div id="smooth-content"&gt;...page...&lt;/div&gt;&lt;/div&gt;
+
+const smoother = ScrollSmoother.create({
+  wrapper: "#smooth-wrapper", content: "#smooth-content",
+  smooth: 1.2,            // seconds to catch up
+  smoothTouch: 0.1,       // smoothing on touch (default 0 = native)
+  effects: true,          // enable data-speed / data-lag attributes
+  normalizeScroll: true,
+  ignoreMobileResize: true,
+  speed: 1,
+  onUpdate: self =&gt; {}, onStop: self =&gt; {}, onFocusIn: (el, e) =&gt; {}
+});
+
+// Parallax via attributes
+// &lt;img data-speed="0.8"&gt;  &lt;div data-lag="0.3"&gt;  data-speed="auto" for images in overflow containers
+smoother.scrollTo(".contact", true, "top 100px");</code></pre>
+<p>Instance methods: <code>scrollTo(target, smooth, position)</code>, <code>scrollTop(v)</code>, <code>offset(el, position)</code>, <code>effects(targets, {speed, lag})</code>, <code>paused(bool)</code>, <code>smooth(v)</code>, <code>getVelocity()</code>, <code>progress</code>, <code>content()</code>, <code>wrapper()</code>, <code>scrollTrigger</code>, <code>kill()</code>. Static: <code>ScrollSmoother.get()</code>, <code>ScrollSmoother.refresh()</code>.</p>
+<p class="note">Skip ScrollSmoother on content-heavy, accessibility-critical sites, or when <code>position:fixed</code> elements must live inside the content (they won't stay fixed; put them outside the wrapper).</p>
+
+<!-- ============ SPLITTEXT ============ -->
+<h2 id="splittext">SplitText</h2>
+<p>Splits text into chars/words/lines elements for animation. 3.13 rewrite: smaller, accessible by default, auto re-split on resize/font load, masking.</p>
+<div class="tbl"><table>
+<tr><th>Config</th><th>Notes</th></tr>
+<tr><td>type</td><td><code>"chars,words,lines"</code> (split only what you animate).</td></tr>
+<tr><td>charsClass / wordsClass / linesClass</td><td>Class names; <code>"char++"</code> adds incrementing numbers.</td></tr>
+<tr><td>mask</td><td><code>"lines"</code>, <code>"words"</code> or <code>"chars"</code>: wraps each in an overflow-clip element for reveal effects.</td></tr>
+<tr><td>autoSplit</td><td>Re-split when fonts load or width changes; use with <code>onSplit</code>.</td></tr>
+<tr><td>onSplit(self)</td><td>Runs on each split; return your animation so it is reverted/recreated.</td></tr>
+<tr><td>aria</td><td><code>"auto"</code> (aria-label on parent, aria-hidden children), <code>"hidden"</code>, <code>"none"</code>.</td></tr>
+<tr><td>deepSlice</td><td>Handle nested elements spanning lines.</td></tr>
+<tr><td>ignore</td><td>Selector of children to leave unsplit.</td></tr>
+<tr><td>propIndex</td><td>Add CSS vars like <code>--char: 3</code>.</td></tr>
+<tr><td>reduceWhiteSpace / smartWrap / wordDelimiter / prepareText / tag</td><td>Fine control of output.</td></tr>
+</table></div>
+<p>Properties: <code>chars</code>, <code>words</code>, <code>lines</code>, <code>masks</code>, <code>elements</code>, <code>isSplit</code>. Methods: <code>split(vars)</code>, <code>revert()</code>, <code>kill()</code>. Static: <code>SplitText.create(target, vars)</code>.</p>
+<pre><code>SplitText.create(".headline", {
+  type: "words,lines", mask: "lines", autoSplit: true,
+  onSplit(self) {
+    return gsap.from(self.lines, { yPercent: 100, duration: 0.8, stagger: 0.08, ease: "expo.out" });
+  }
+});</code></pre>
+
+<!-- ============ FLIP ============ -->
+<h2 id="flip">Flip</h2>
+<p>Animate between two layout states (reorders, grid/list switch, moving an element to a new parent, shared-element transitions).</p>
+<div class="tbl"><table>
+<tr><th>Method</th><th>Notes</th></tr>
+<tr><td>Flip.getState(targets, {props, simple})</td><td>Record position/size (and extra CSS props).</td></tr>
+<tr><td>Flip.from(state, vars)</td><td>After DOM change, animate from recorded state. Vars: <code>duration, ease, absolute, nested, scale, simple, spin, targets, toggleClass, zIndex, fade, prune, onEnter, onLeave, props</code> + tween vars.</td></tr>
+<tr><td>Flip.to(state, vars)</td><td>Inverse: animate to a state.</td></tr>
+<tr><td>Flip.fit(el, target, vars)</td><td>Resize/position one element to fit another.</td></tr>
+<tr><td>Flip.isFlipping(el) / Flip.killFlipsOf(el)</td><td>—</td></tr>
+<tr><td>Flip.makeAbsolute(targets)</td><td>Convert to absolute positioning in place.</td></tr>
+<tr><td>Flip.batch(id)</td><td>Coordinate multiple Flips across components.</td></tr>
+<tr><td>state.getProperty / getElementState / makeAbsolute / update / clear</td><td>FlipState helpers. <code>data-flip-id</code> matches different elements across states.</td></tr>
+</table></div>
+<pre><code>const state = Flip.getState(".item");
+container.classList.toggle("grid");          // change layout however you like
+Flip.from(state, {
+  duration: 0.6, ease: "power2.inOut", absolute: true, stagger: 0.03,
+  onEnter: els =&gt; gsap.fromTo(els, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1 }),
+  onLeave: els =&gt; gsap.to(els, { autoAlpha: 0, scale: 0 })
+});</code></pre>
+
+<!-- ============ DRAGGABLE ============ -->
+<h2 id="draggable">Draggable & InertiaPlugin</h2>
+<div class="tbl"><table>
+<tr><th>Config</th><th>Notes</th></tr>
+<tr><td>type</td><td><code>"x,y"</code>, <code>"x"</code>, <code>"y"</code>, <code>"rotation"</code>, <code>"top,left"</code>, <code>"scroll"</code>, <code>"scrollTop"</code>, <code>"scrollLeft"</code>.</td></tr>
+<tr><td>bounds</td><td>Element, selector, or <code>{minX,maxX,minY,maxY}</code> / <code>{minRotation,maxRotation}</code>.</td></tr>
+<tr><td>inertia</td><td>Throw with momentum (needs InertiaPlugin). Object form: <code>{x:{velocity,end,min,max}}</code>.</td></tr>
+<tr><td>snap / liveSnap</td><td>Snap on release / during drag. Array, function, <code>{x, y, points, radius}</code>.</td></tr>
+<tr><td>edgeResistance</td><td>0–1 resistance beyond bounds.</td></tr>
+<tr><td>throwResistance / maxDuration / minDuration / overshootTolerance / throwProps</td><td>Inertia tuning.</td></tr>
+<tr><td>trigger</td><td>Different element to start drag from (handle).</td></tr>
+<tr><td>handle (via trigger), cursor, activeCursor</td><td>UX.</td></tr>
+<tr><td>lockAxis</td><td>Lock to the first axis moved.</td></tr>
+<tr><td>dragClickables</td><td>Allow drag starting on links/buttons.</td></tr>
+<tr><td>allowNativeTouchScrolling / allowContextMenu / allowEventDefault</td><td>Touch/mouse behavior.</td></tr>
+<tr><td>dragResistance / minimumMovement / clickableTest / zIndexBoost / autoScroll / force3D / callbackScope</td><td>Misc tuning.</td></tr>
+<tr><td>callbacks</td><td>onPress, onDragStart, onDrag, onDragEnd, onRelease, onClick, onLockAxis, onThrowUpdate, onThrowComplete, onMove (+…Params).</td></tr>
+</table></div>
+<p>Instance props: <code>x, y, rotation, startX, startY, endX, endY, endRotation, deltaX, deltaY, pointerX, pointerY, minX, maxX, minY, maxY, isDragging, isPressed, isThrowing, lockedAxis, target, vars, tween, pointerEvent</code>.</p>
+<p>Instance methods: <code>applyBounds()</code>, <code>disable()</code>, <code>enable()</code>, <code>enabled()</code>, <code>endDrag(e)</code>, <code>startDrag(e)</code>, <code>getDirection(from)</code>, <code>hitTest(target, threshold)</code>, <code>timeSinceDrag()</code>, <code>update(applyBounds)</code>, <code>kill()</code>, <code>addEventListener()</code>. Static: <code>Draggable.create()</code>, <code>Draggable.get(target)</code>, <code>Draggable.hitTest(a, b, threshold)</code>, <code>Draggable.timeSinceDrag()</code>, <code>Draggable.zIndex</code>.</p>
+<pre><code>gsap.registerPlugin(Draggable, InertiaPlugin);
+Draggable.create(".knob", {
+  type: "rotation", inertia: true,
+  snap: v =&gt; Math.round(v / 30) * 30,
+  onDrag() { valueEl.textContent = Math.round(this.rotation); }
+});
+Draggable.create(".card", {
+  bounds: ".table", inertia: true, edgeResistance: 0.65,
+  onDragEnd() { if (this.hitTest(".bin", "50%")) gsap.to(this.target, { scale: 0 }); }
+});
+
+// InertiaPlugin on its own: glide to a stop from a tracked velocity
+InertiaPlugin.track(".puck", "x");
+gsap.to(".puck", { inertia: { x: "auto", resistance: 200 } }); // or {velocity, min, max, end}
+// Static: InertiaPlugin.track(), untrack(), isTracking(), getVelocity()</code></pre>
+
+<!-- ============ SVG ============ -->
+<h2 id="svg">DrawSVG & MorphSVG</h2>
+<h3>DrawSVGPlugin</h3>
+<p>Animates the visible stroke segment (stroke-dasharray/offset) of path, line, polyline, polygon, rect, ellipse, circle. Value is "start end" in % or px; a single value means "0 value".</p>
+<pre><code>gsap.from("#signature path", { drawSVG: 0, duration: 2, stagger: 0.2 });   // draw in
+gsap.fromTo(".ring", { drawSVG: "0% 10%" }, { drawSVG: "90% 100%", repeat: -1, ease: "none" }); // moving segment
+gsap.to(".line", { drawSVG: "50% 50%" });  // collapse to center
+// DrawSVGPlugin.getLength(el), DrawSVGPlugin.getPosition(el)
+// Add  vector-effect="non-scaling-stroke"  carefully; use "live" keyword if element resizes: drawSVG:"0% 100% live"</code></pre>
+<h3>MorphSVGPlugin</h3>
+<p>Morphs one shape's path data into another (shapes need not have matching points).</p>
+<pre><code>MorphSVGPlugin.convertToPath("circle, rect, ellipse, line, polygon, polyline");
+gsap.to("#play", { morphSVG: "#pause", duration: 0.5 });
+gsap.to("#blob", { morphSVG: { shape: "#blob2", type: "rotational", shapeIndex: 3, origin: "50% 50%", map: "complexity", precision: 2 } });</code></pre>
+<p>Options: <code>shape</code>, <code>type</code> ("linear" | "rotational"), <code>shapeIndex</code> (number, "auto", or array per sub-path; tune with <code>findShapeIndex()</code>), <code>map</code> ("size" | "position" | "complexity"), <code>origin</code>, <code>precision</code>, <code>render</code> (canvas callback), <code>updateTarget</code>, <code>smooth</code>, <code>curveMode</code>. Static: <code>convertToPath</code>, <code>pathDataToBezier</code>, <code>rawPathToString</code>, <code>stringToRawPath</code>, <code>defaultType</code>, <code>defaultMap</code>, <code>defaultUpdateTarget</code>.</p>
+
+<!-- ============ MOTION PATH ============ -->
+<h2 id="motionpath">MotionPathPlugin & MotionPathHelper</h2>
+<pre><code>gsap.to(".plane", {
+  duration: 5, ease: "power1.inOut",
+  motionPath: {
+    path: "#route",           // SVG path, selector, raw data, or array of points [{x,y},…]
+    align: "#route",          // put the element on the path
+    alignOrigin: [0.5, 0.5],
+    autoRotate: true,         // or a degree offset, e.g. 90
+    start: 0, end: 1,         // portion of the path
+    curviness: 1.5,           // for point arrays
+    type: "cubic"             // "thru" (default for arrays) | "cubic"
+  }
+});
+// Utilities: MotionPathPlugin.getRawPath, cacheRawPathMeasurements, getPositionOnPath,
+// sliceRawPath, convertToPath, convertCoordinates(from, to, point), getGlobalMatrix,
+// getAlignMatrix, getRelativePosition, pointsToSegment, arrayToRawPath, stringToRawPath, rawPathToString
+
+// MotionPathHelper: dev-only visual editor. Drag anchor points, then click "copy motion path".
+MotionPathHelper.create(".plane", { path: "#route" });   // or pass the tween directly
+// Options: path, pathColor, pathWidth, pathOpacity, selected, handleSize, draggable, onPress, onRelease</code></pre>
+
+<!-- ============ OBSERVER ============ -->
+<h2 id="observer">Observer</h2>
+<p>Unified listener for wheel, touch, pointer and scroll with velocity and direction. Built into ScrollTrigger as <code>ScrollTrigger.observe()</code>. Use it for full-page "one-swipe-one-section" slideshows without real scrolling.</p>
+<pre><code>Observer.create({
+  target: window, type: "wheel,touch,pointer",
+  wheelSpeed: -1, tolerance: 10, preventDefault: true,
+  onDown: () =&gt; !animating &amp;&amp; goTo(index - 1),
+  onUp:   () =&gt; !animating &amp;&amp; goTo(index + 1),
+});</code></pre>
+<p>Config: <code>target, type, axis, lockAxis, tolerance, dragMinimum, debounce, capture, preventDefault, wheelSpeed, scrollSpeed, ignore, ignoreCheck, allowClicks, lineHeight</code>. Callbacks: <code>onUp, onDown, onLeft, onRight, onChange, onChangeX, onChangeY, onDrag, onDragStart, onDragEnd, onPress, onRelease, onClick, onHover, onHoverEnd, onMove, onWheel, onToggleX, onToggleY, onStop, onStopDelay, onLockAxis</code>. Instance: <code>deltaX, deltaY, velocityX, velocityY, x, y, isDragging, isPressed, event, enable(), disable(), kill()</code>. Static: <code>Observer.getAll()</code>, <code>Observer.getById()</code>.</p>
+
+<!-- ============ PHYSICS ============ -->
+<h2 id="physics">Physics2DPlugin & PhysicsPropsPlugin</h2>
+<p>Physics-based motion where the end point is not known; duration controls how long it runs.</p>
+<pre><code>// Physics2D: angle + velocity + gravity/acceleration in 2D (confetti, particles)
+gsap.to(".confetti", {
+  duration: 2.5,
+  physics2D: { velocity: "random(250, 500)", angle: "random(240, 300)", gravity: 600, friction: 0.02 }
+});
+// Props: velocity, angle, acceleration, accelerationAngle, gravity, friction, xProp, yProp
+
+// PhysicsProps: independent per-property velocity/acceleration/friction
+gsap.to(".wheel", { duration: 4, physicsProps: { rotation: { velocity: 720, friction: 0.15 }, x: { velocity: 300, acceleration: -60 } } });</code></pre>
+
+<!-- ============ TEXT ============ -->
+<h2 id="text">TextPlugin & ScrambleTextPlugin</h2>
+<pre><code>// TextPlugin: replace text character by character (or word by word)
+gsap.to(".type", { duration: 2, text: { value: "Hello, world", delimiter: "", speed: 1, newClass: "new", oldClass: "old", padSpace: true, preserveSpaces: true, rtl: false, type: "diff" } });
+
+// ScrambleTextPlugin: decode/scramble effect
+gsap.to(".code", { duration: 1.5, scrambleText: { text: "ACCESS GRANTED", chars: "01", revealDelay: 0.3, speed: 0.4, newClass: "lit", tweenLength: true, rightToLeft: false, delimiter: "" } });
+// chars presets: "upperCase", "lowerCase", "upperAndLowerCase", or any string of characters</code></pre>
+
+<!-- ============ SCROLLTO ============ -->
+<h2 id="scrollto">ScrollToPlugin</h2>
+<pre><code>gsap.to(window, { duration: 1, scrollTo: { y: "#pricing", offsetY: 80, autoKill: true } });
+gsap.to(".list", { scrollTo: { y: "max" } });
+gsap.to(window, { scrollTo: 400 });
+// Props: x, y (number, selector, element, "max"), offsetX, offsetY, autoKill, onAutoKill
+// Global: ScrollToPlugin.config({ autoKillThreshold: 7 })
+// Note: with ScrollSmoother, use smoother.scrollTo() instead.</code></pre>
+
+<!-- ============ OTHERS ============ -->
+<h2 id="others">EaselPlugin, PixiPlugin, GSDevTools</h2>
+<h3>EaselPlugin</h3>
+<p>Animates EaselJS (CreateJS) filter properties: <code>colorFilter</code>, <code>colorMatrixFilter</code> (saturation, contrast, hue, brightness, colorize, tint), plus <code>frame</code> for MovieClips. Legacy; only relevant if you still use CreateJS / Adobe Animate canvas output.</p>
+<pre><code>gsap.registerPlugin(EaselPlugin); EaselPlugin.registerCreateJS(createjs);
+gsap.to(circle, { duration: 1, easel: { colorMatrixFilter: { saturation: 0, brightness: 1.2 } } });</code></pre>
+<h3>PixiPlugin</h3>
+<p>Animate PixiJS display objects with friendly props: combined <code>scale</code>, <code>skew</code>, <code>positionX/Y</code>, <code>pivotX/Y</code>, <code>anchorX/Y</code>, degree-based <code>rotation</code>, colors (<code>tint</code>, <code>fillColor</code>, <code>lineColor</code>), and filters (<code>blur</code>, <code>brightness</code>, <code>contrast</code>, <code>saturation</code>, <code>hue</code>, <code>colorize</code>, <code>colorizeAmount</code>, <code>combineCMF</code>).</p>
+<pre><code>PixiPlugin.registerPIXI(PIXI); gsap.registerPlugin(PixiPlugin);
+gsap.to(sprite, { pixi: { x: 300, rotation: 90, scale: 1.5, tint: 0xff3366, blur: 4 } });</code></pre>
+<h3>GSDevTools</h3>
+<p>Dev-only scrubber UI: timeline bar, play/pause, loop, in/out points, speed, and a dropdown of animations by id. Remove before production.</p>
+<pre><code>gsap.registerPlugin(GSDevTools);
+GSDevTools.create({ animation: tl, globalSync: false, minimal: false, persist: true, paused: false, keyboard: true, loop: false, inTime: 0, outTime: 2, timeScale: 1, hideGlobalTimeline: true, container: "#tools", id: "intro" });
+// Static: GSDevTools.getById(id); instance: kill()</code></pre>
+
+<!-- ============ UTILS ============ -->
+<h2 id="utils">Utility methods (gsap.utils)</h2>
+<p>Most accept their final argument optionally; omit it and you get a reusable function (e.g. <code>const clamp01 = gsap.utils.clamp(0,1)</code>). <code>pipe</code> composes them.</p>
+<div class="tbl"><table>
+<tr><th>Utility</th><th>Example</th></tr>
+<tr><td>checkPrefix(prop)</td><td><code>checkPrefix("filter")</code> → vendor-prefixed name if needed.</td></tr>
+<tr><td>clamp(min, max, v)</td><td><code>clamp(0, 100, 130)</code> → 100.</td></tr>
+<tr><td>distribute(config)</td><td>Spread values across an array of elements (base, amount, from, grid, ease). Basis of advanced staggers.</td></tr>
+<tr><td>getUnit(v)</td><td><code>getUnit("30px")</code> → "px".</td></tr>
+<tr><td>interpolate(a, b, p)</td><td>Numbers, colors, strings, objects: <code>interpolate("red","blue",0.5)</code>.</td></tr>
+<tr><td>mapRange(inMin, inMax, outMin, outMax, v)</td><td>Map mouse X to rotation.</td></tr>
+<tr><td>normalize(min, max, v)</td><td>→ 0–1.</td></tr>
+<tr><td>pipe(...fns)</td><td><code>pipe(clamp(0,100), snap(5))</code>.</td></tr>
+<tr><td>random(min, max, snap?) / random(array)</td><td>Also string form in vars: <code>x:"random(-100,100,5)"</code>.</td></tr>
+<tr><td>selector(scope)</td><td>Scoped query function: <code>const q = gsap.utils.selector(ref)</code>.</td></tr>
+<tr><td>shuffle(array)</td><td>In-place shuffle.</td></tr>
+<tr><td>snap(increment | array | {values, radius}, v)</td><td>Snap to grid or nearest value.</td></tr>
+<tr><td>splitColor(color, hsl?)</td><td>→ [r,g,b(,a)] or [h,s,l].</td></tr>
+<tr><td>toArray(targets, scope?)</td><td>Selector/NodeList → Array.</td></tr>
+<tr><td>unitize(fn, unit)</td><td>Wrap a function so output gets a unit.</td></tr>
+<tr><td>wrap(min, max, v) / wrap(array, i)</td><td>Loop values: infinite carousels.</td></tr>
+<tr><td>wrapYoyo(min, max, v)</td><td>Ping-pong wrap.</td></tr>
+</table></div>
+<pre><code>const { mapRange, clamp, pipe, snap, wrap, toArray } = gsap.utils;
+const toRotation = pipe(mapRange(0, innerWidth, -30, 30), snap(1));
+addEventListener("pointermove", e =&gt; gsap.to(".dial", { rotation: toRotation(e.clientX) }));
+
+// Infinite marquee with wrap + modifiers
+const wrapX = wrap(-100, 400);
+gsap.to(".tile", { x: "+=500", duration: 10, ease: "none", repeat: -1, modifiers: { x: x =&gt; wrapX(parseFloat(x)) + "px" } });
+
+gsap.to(toArray(".star"), { color: "random([#fc0, #f60, #f36])", x: "random(-50, 50)" });</code></pre>
+
+<!-- ============ STAGGERS ============ -->
+<h2 id="staggers">Staggers</h2>
+<pre><code>gsap.to(".dot", { y: -20, stagger: 0.1 });            // simple: 0.1s between each
+
+gsap.to(".cell", {
+  scale: 0.2,
+  stagger: {
+    each: 0.05,          // or amount: 1 (total spread time)
+    from: "center",      // "start" | "end" | "center" | "edges" | "random" | index | [x, y] ratios
+    grid: "auto",        // or [rows, cols] for 2D distance
+    axis: "x",           // limit grid distance to one axis
+    ease: "power2.in",   // distributes start times
+    repeat: -1, yoyo: true  // per-element repeat (lives inside stagger object)
+  }
+});
+
+// Function stagger: full control
+gsap.to(".bar", { height: 100, stagger: (i, target, list) =&gt; i * 0.05 + Math.random() * 0.1 });</code></pre>
+<p class="note">Put <code>repeat</code>/<code>yoyo</code> inside the stagger object to make each element loop on its own; on the outer vars they repeat the whole group.</p>
+
+<!-- ============ SEQUENCING ============ -->
+<h2 id="sequencing">Sequencing animations</h2>
+<div class="tbl"><table>
+<tr><th>Position</th><th>Meaning</th></tr>
+<tr><td>(omitted)</td><td>At the end of the timeline.</td></tr>
+<tr><td>1</td><td>Absolute: 1 second in.</td></tr>
+<tr><td>"+=1"</td><td>1s after the end (gap).</td></tr>
+<tr><td>"-=1"</td><td>1s before the end (overlap).</td></tr>
+<tr><td>"&lt;"</td><td>Start of the previous child.</td></tr>
+<tr><td>"&gt;"</td><td>End of the previous child.</td></tr>
+<tr><td>"&lt;0.3" / "&gt;-0.2"</td><td>Relative to previous start / end.</td></tr>
+<tr><td>"&lt;25%" / "&gt;50%"</td><td>Percentage of the previous child's duration.</td></tr>
+<tr><td>"label" / "label+=0.5"</td><td>At or relative to a label (created if missing).</td></tr>
+<tr><td>"+=50%"</td><td>Percent of the inserted animation's own duration.</td></tr>
+</table></div>
+<p>Patterns: chain with method calls; build sections as functions that return timelines and nest them; use labels for chapters; use <code>tweenFromTo</code> to play segments; avoid chained <code>delay</code> math or <code>onComplete</code> pyramids.</p>
+
+<!-- ============ CONTROL ============ -->
+<h2 id="control">Control & callbacks</h2>
+<pre><code>const anim = gsap.to(".box", { x: 300, paused: true, onComplete: done, onCompleteParams: ["box"] });
+btnPlay.onclick    = () =&gt; anim.play();
+btnPause.onclick   = () =&gt; anim.pause();
+btnReverse.onclick = () =&gt; anim.reversed() ? anim.play() : anim.reverse();
+btnToggle.onclick  = () =&gt; anim.paused(!anim.paused());
+slider.oninput     = e =&gt; anim.progress(e.target.value / 100);
+anim.timeScale(2);                 // double speed
+anim.eventCallback("onUpdate", () =&gt; console.log(anim.progress()));
+
+// Hover in/out with one tween: reverse instead of creating new tweens
+const hover = gsap.to(".btn", { scale: 1.06, paused: true, duration: 0.2 });
+btn.addEventListener("mouseenter", () =&gt; hover.play());
+btn.addEventListener("mouseleave", () =&gt; hover.reverse());
+
+// Global
+gsap.globalTimeline.pause();
+gsap.ticker.lagSmoothing(0);       // when syncing with another loop (e.g. Lenis)</code></pre>
+<p>Callback order: <code>onStart</code> (first time playhead moves off 0) → <code>onUpdate</code> (every render) → <code>onRepeat</code> → <code>onComplete</code>. Reversing to 0 fires <code>onReverseComplete</code>. Killed or overwritten mid-flight fires <code>onInterrupt</code>. Inside callbacks <code>this</code> is the animation (use regular functions, not arrows, to access it).</p>
+
+<!-- ============ REACT ============ -->
+<h2 id="react">React, cleanup & accessibility</h2>
+<pre><code>npm i @gsap/react
+import { useGSAP } from "@gsap/react";
+gsap.registerPlugin(useGSAP);
+
+function Hero() {
+  const root = useRef(null);
+  const { contextSafe } = useGSAP(() =&gt; {
+    gsap.from(".title", { y: 40, autoAlpha: 0 });         // selector scoped to root
+  }, { scope: root, dependencies: [], revertOnUpdate: false });
+
+  const onClick = contextSafe(() =&gt; gsap.to(".title", { rotation: "+=10" })); // event handlers must be wrapped
+  return &lt;section ref={root}&gt;&lt;h1 className="title" onClick={onClick}&gt;Hi&lt;/h1&gt;&lt;/section&gt;;
+}
+
+// Reduced motion + responsive in one place
+const mm = gsap.matchMedia();
+mm.add({ isDesktop: "(min-width: 800px)", reduce: "(prefers-reduced-motion: reduce)" }, ctx =&gt; {
+  const { isDesktop, reduce } = ctx.conditions;
+  gsap.from(".panel", { x: reduce ? 0 : isDesktop ? 200 : 50, autoAlpha: 0, duration: reduce ? 0 : 1 });
+});</code></pre>
+<p class="note">Common gotchas: register plugins once; avoid <code>from()</code> on the same element twice (it reads the already-animated value; use <code>fromTo</code>); set <code>overwrite:"auto"</code> for rapid-fire interactions; never animate the same property from CSS transitions and GSAP at once; kill/revert on unmount.</p>
+
+<p style="color:var(--muted);margin-top:48px">Source: gsap.com/docs/v3 (GSAP 3.13). Verify property names against the docs when upgrading versions.</p>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function(){
+  if(!window.gsap) return;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const stage = document.querySelector(".stage");
+  const tl = gsap.timeline({paused:true, defaults:{duration:reduce?0:0.6, ease:"power2.inOut"}})
+    .to("#demoBox",{x:()=>stage.clientWidth-44, rotation:180})
+    .to("#demoBox",{scale:0.6, borderRadius:"50%"},"<0.2")
+    .to("#demoBox",{x:0, rotation:0, scale:1, borderRadius:"6px", ease:"back.out(1.7)"},"+=0.2");
+  const $ = id => document.getElementById(id);
+  $("bPlay").onclick=()=>{tl.timeScale(1).restart();};
+  $("bPause").onclick=()=>{tl.paused(!tl.paused());};
+  $("bRev").onclick=()=>{tl.reverse();};
+  $("bSlow").onclick=()=>{tl.timeScale(0.25).play();};
+  $("bStag").onclick=()=>{gsap.fromTo("#demoDots .dot",{y:0},{y:-18,duration:reduce?0:0.3,yoyo:true,repeat:1,ease:"power1.out",stagger:{each:0.07,from:"center"}});};
+})();
+</script>
+
+</body></html>
